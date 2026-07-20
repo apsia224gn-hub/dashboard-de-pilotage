@@ -117,6 +117,21 @@ dialog{background:var(--card);border:1px solid var(--bd);border-radius:12px;colo
 dialog::backdrop{background:rgba(0,0,0,.72)}
 textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:ui-monospace,monospace;font-size:.79rem;padding:12px;resize:vertical;line-height:1.6}
 
+.field{margin-bottom:12px}
+.field label{display:block;font-size:.76rem;color:var(--tx2);margin-bottom:5px;font-weight:600}
+.field input[type=text],.field input[type=date],.field select,.field textarea{width:100%;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:9px 12px;font-size:.88rem;font-family:inherit}
+.field input[type=color]{width:100%;height:40px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:3px;cursor:pointer}
+.field textarea{min-height:70px;resize:vertical;line-height:1.5}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gadd,.gedit,.gdel,.tedit,.tdel{background:none;border:0;cursor:pointer;font-family:inherit;line-height:1;border-radius:4px;padding:0 5px}
+.gadd,.gedit,.tedit{color:var(--tx2);font-size:.9rem}
+.gadd:hover,.gedit:hover,.tedit:hover{color:var(--accent);background:rgba(59,130,246,.14)}
+.gdel,.tdel{color:var(--tx3);font-size:1.05rem}
+.gdel:hover,.tdel:hover{color:#fca5a5;background:rgba(239,68,68,.14)}
+.gtitle .gedit,.gtitle .gdel{margin-left:4px}
+.due .tedit,.due .tdel{margin-left:4px;vertical-align:1px}
+.empty{padding:14px 15px;color:var(--tx3);font-size:.84rem;background:var(--bg2)}
+
 footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;border-top:1px solid var(--bd2);margin-top:34px}
 
 @media(max-width:820px){
@@ -197,6 +212,11 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
     <input class="search" id="q" placeholder="Rechercher une action…">
   </div>
 
+  <div class="actions" style="margin:4px 0 16px">
+    <button class="btn btn-p" onclick="openTask()">＋ Nouvelle action</button>
+    <button class="btn" onclick="openCat()">＋ Nouvelle catégorie</button>
+  </div>
+
   <div id="groups"></div>
 
   <div class="actions">
@@ -228,6 +248,40 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 </dialog>
 
+<dialog id="dlgCat">
+  <h2 id="cat-h" style="margin:0 0 14px">Nouvelle catégorie</h2>
+  <input type="hidden" id="cat-id">
+  <div class="field"><label>Titre</label><input type="text" id="cat-title" placeholder="Ex. Partenariats"></div>
+  <div class="frow">
+    <div class="field"><label>Couleur</label><input type="color" id="cat-color" value="#3b82f6"></div>
+    <div class="field"><label>Sous-titre (optionnel)</label><input type="text" id="cat-sub" placeholder="Courte description"></div>
+  </div>
+  <div class="actions" style="margin:6px 0 0">
+    <button class="btn btn-p" onclick="saveCat()">Enregistrer</button>
+    <button class="btn" onclick="document.getElementById('dlgCat').close()">Annuler</button>
+  </div>
+</dialog>
+
+<dialog id="dlgTask">
+  <h2 id="tk-h" style="margin:0 0 14px">Nouvelle action</h2>
+  <input type="hidden" id="tk-id">
+  <div class="field"><label>Catégorie</label><select id="tk-cat"></select></div>
+  <div class="field"><label>Intitulé de l'action</label><input type="text" id="tk-title" placeholder="Ex. Contacter le fournisseur X"></div>
+  <div class="field"><label>Détail (optionnel)</label><textarea id="tk-sub" placeholder="Précision, contexte…"></textarea></div>
+  <div class="frow">
+    <div class="field"><label>Responsable</label><select id="tk-owner">
+      <option value="MD">M. Diawara</option><option value="MK">M. C. Kanté</option>
+      <option value="MH">M. Hady</option><option value="ALL">Les trois Parties</option></select></div>
+    <div class="field"><label>Priorité</label><select id="tk-prio">
+      <option value="norm">Normal</option><option value="haut">Haut</option><option value="crit">Critique</option></select></div>
+  </div>
+  <div class="field"><label>Échéance (optionnel)</label><input type="date" id="tk-due"></div>
+  <div class="actions" style="margin:6px 0 0">
+    <button class="btn btn-p" onclick="saveTask()">Enregistrer</button>
+    <button class="btn" onclick="document.getElementById('dlgTask').close()">Annuler</button>
+  </div>
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const PEOPLE={
@@ -236,7 +290,7 @@ const PEOPLE={
   MH:{n:'Mohamed HADY',r:'Apporteur d\u2019Affaires · 20 %',c:'av-mh'},
   ALL:{n:'Les trois Parties',r:'Décision collégiale',c:'av-all'}
 };
-const GROUPS=[
+const BGROUPS=[
   {id:'SEC',t:'Sécurité — passif à purger',d:'#ef4444',s:'Avant toute autre chose'},
   {id:'TEC',t:'Produit et technique',d:'#8b5cf6',s:'Finaliser le code'},
   {id:'DES',t:'Design et charte graphique',d:'#06b6d4',s:'Identité visuelle'},
@@ -244,7 +298,7 @@ const GROUPS=[
   {id:'PAY',t:'Paiement — Intouch',d:'#22c55e',s:'NDA puis intégration'},
   {id:'COM',t:'Commercial et marketing',d:'#3b82f6',s:'B2C puis B2B écoles'}
 ];
-const T=[
+const BT=[
  {id:'S1',g:'SEC',t:'Rotation des clés Groq et Kkiapay chez les fournisseurs',s:'Clés lisibles dans l\u2019historique du dépôt public — exploitables en quelques heures',w:'MK',d:'2026-07-21',p:'crit'},
  {id:'S2',g:'SEC',t:'Passage du dépôt en privé, Porteur de Projet administrateur',s:'Clause escrow — Article 6 du contrat',w:'MK',d:'2026-07-21',p:'crit'},
  {id:'S3',g:'SEC',t:'Push de feat/prod-hardening et ouverture de la PR',s:'6 commits non poussés — risque de perte',w:'MK',d:'2026-07-22',p:'crit'},
@@ -303,12 +357,37 @@ const SUPABASE_KEY='sb_publishable_00PIAm04rdIudlz7kRGt9w_3UU_KpjV';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const K='apsia_dash_v1';
-let S=JSON.parse(localStorage.getItem(K)||'{}');   // cache local : affichage instantané + repli hors ligne
+let S=JSON.parse(localStorage.getItem(K)||'{}');            // statuts (cache local)
+let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégories ajoutées via Supabase
+let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
 let F={who:'all',st:'all',q:''};
 const CY=['todo','wip','done','block'];
 const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
 
-function cache(){localStorage.setItem(K,JSON.stringify(S))}
+// GROUPS et T = données de base (code) + éléments ajoutés (Supabase), fusionnés.
+// Les éléments ajoutés portent le drapeau x:1 (supprimables).
+let GROUPS=[],T=[];
+function dbToTask(r){return {id:r.id,g:r.category_id,t:r.title,s:r.subtitle||'',w:r.owner||'ALL',d:r.due_date,p:r.priority||'norm'}}
+function rebuild(){
+  // Catégories : une ligne Supabase de même id ÉDITE la version du code ; un nouvel id s'ajoute (del:1 = supprimable).
+  const co={};customCats.forEach(c=>co[c.id]=c);
+  GROUPS=BGROUPS.map(G=>co[G.id]?{id:G.id,t:co[G.id].title,d:co[G.id].color||G.d,s:co[G.id].subtitle||'',del:0}:Object.assign({},G,{del:0}));
+  customCats.filter(c=>!BGROUPS.some(G=>G.id===c.id))
+            .forEach(c=>GROUPS.push({id:c.id,t:c.title,d:c.color||'#3b82f6',s:c.subtitle||'',del:1}));
+  // Actions : idem — une ligne Supabase de même id remplace/édite la version du code.
+  const to={};customTasks.forEach(t=>to[t.id]=t);
+  T=BT.map(bt=>to[bt.id]?Object.assign(dbToTask(to[bt.id]),{del:0}):Object.assign({},bt,{del:0}));
+  customTasks.filter(t=>!BT.some(bt=>bt.id===t.id))
+             .forEach(t=>T.push(Object.assign(dbToTask(t),{del:1})));
+}
+rebuild();
+
+function cache(){
+  localStorage.setItem(K,JSON.stringify(S));
+  localStorage.setItem(K+'_cats',JSON.stringify(customCats));
+  localStorage.setItem(K+'_tasks',JSON.stringify(customTasks));
+}
+function uid(pfx){return pfx+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
 function setSync(state){
   const el=document.getElementById('sync');if(!el)return;
@@ -318,31 +397,44 @@ function setSync(state){
 }
 
 async function load(){
-  const {data,error}=await sb.from('task_status').select('task_id,status');
-  if(error){console.error(error);setSync('offline');return}
-  S={};data.forEach(r=>{S[r.task_id]=r.status});
-  cache();render();setSync('online');
+  const [rs,rc,rt]=await Promise.all([
+    sb.from('task_status').select('task_id,status'),
+    sb.from('categories').select('*').order('position'),
+    sb.from('tasks').select('*').order('position')
+  ]);
+  if(!rs.error){S={};rs.data.forEach(r=>{S[r.task_id]=r.status})}
+  if(!rc.error)customCats=rc.data;
+  if(!rt.error)customTasks=rt.data;
+  rebuild();cache();render();
+  setSync(rs.error||rc.error||rt.error?'offline':'online');
+  if(rc.error||rt.error)console.error(rc.error||rt.error);
 }
+async function refetchCats(){const{data,error}=await sb.from('categories').select('*').order('position');if(!error){customCats=data;rebuild();cache();renderSoon()}}
+async function refetchTasks(){const{data,error}=await sb.from('tasks').select('*').order('position');if(!error){customTasks=data;rebuild();cache();renderSoon()}}
 
 let _rt;
 function renderSoon(){clearTimeout(_rt);_rt=setTimeout(render,80)}
 function subscribe(){
-  sb.channel('task_status-live')
+  sb.channel('apsia-live')
     .on('postgres_changes',{event:'*',schema:'public',table:'task_status'},p=>{
       if(p.eventType==='DELETE'){if(p.old&&p.old.task_id)delete S[p.old.task_id]}
       else{S[p.new.task_id]=p.new.status}
       cache();renderSoon();
     })
+    .on('postgres_changes',{event:'*',schema:'public',table:'categories'},refetchCats)
+    .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},refetchTasks)
     .subscribe(s=>{if(s==='SUBSCRIBED')setSync('online')});
 }
 function st(id){return S[id]||'todo'}
-function fmt(d){const[y,m,j]=d.split('-');return j+'/'+m}
+function fmt(d){if(!d)return '—';const[y,m,j]=d.split('-');return j+'/'+m}
 function dueCls(d,s){
-  if(s==='done')return '';
+  if(s==='done'||!d)return '';
   const t=new Date(d),n=new Date();n.setHours(0,0,0,0);
   const j=Math.round((t-n)/864e5);
   return j<0?'late':j<=7?'soon':'';
 }
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
 function render(){
   const g=document.getElementById('groups');g.innerHTML='';
@@ -355,19 +447,24 @@ function render(){
       if(F.q&&!(t.t+' '+t.s).toLowerCase().includes(F.q))return false;
       return true;
     });
-    if(!vis.length)return;
+    if(!vis.length&&!(G.del&&!ts.length))return;   // masquer si filtré ; garder une catégorie ajoutée vide
     const d=document.createElement('div');d.className='grp';
-    d.innerHTML='<div class="ghd"><div class="gtitle"><span class="gdot" style="background:'+G.d+'"></span>'+G.t+'</div>'+
-      '<div class="gmeta">'+done+' / '+ts.length+' · '+G.s+'</div></div>'+
-      '<div class="glist">'+vis.map(t=>{
-        const s=st(t.id),P=PEOPLE[t.w];
+    d.innerHTML='<div class="ghd"><div class="gtitle"><span class="gdot" style="background:'+G.d+'"></span>'+esc(G.t)+
+      '<button class="gedit" title="Modifier la catégorie" onclick="editCat(\''+G.id+'\')">✎</button>'+
+      (G.del?'<button class="gdel" title="Supprimer la catégorie" onclick="delCat(\''+G.id+'\')">×</button>':'')+'</div>'+
+      '<div class="gmeta">'+done+' / '+ts.length+(G.s?' · '+esc(G.s):'')+
+      '<button class="gadd" title="Ajouter une action dans cette catégorie" onclick="openTask(\''+G.id+'\')">＋</button></div></div>'+
+      '<div class="glist">'+(vis.length?vis.map(t=>{
+        const s=st(t.id),P=PEOPLE[t.w]||PEOPLE.ALL;
         return '<div class="task '+(s==='done'?'done':'')+'">'+
           '<button class="st st-'+s+'" onclick="cyc(\''+t.id+'\')">'+LBL[s]+'</button>'+
-          '<div><div class="tt"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span>'+t.t+'</div>'+
-          '<div class="tsub">'+t.s+'</div></div>'+
+          '<div><div class="tt"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span>'+esc(t.t)+'</div>'+
+          '<div class="tsub">'+esc(t.s)+'</div></div>'+
           '<div class="own"><span class="av '+P.c+'">'+(t.w==='ALL'?'★':t.w)+'</span>'+P.n.split(' ').slice(-1)[0]+'</div>'+
-          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+'</div></div>';
-      }).join('')+'</div>';
+          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+
+          '<button class="tedit" title="Modifier l\'action" onclick="editTask(\''+t.id+'\')">✎</button>'+
+          (t.del?'<button class="tdel" title="Supprimer l\'action" onclick="delTask(\''+t.id+'\')">×</button>':'')+'</div></div>';
+      }).join(''):'<div class="empty">Aucune action ici — cliquez sur ＋ pour en ajouter une.</div>')+'</div>';
     g.appendChild(d);
   });
   stats();
@@ -434,6 +531,102 @@ function report(){
 function copyRep(){
   const t=document.getElementById('rep');t.select();
   navigator.clipboard.writeText(t.value).then(()=>alert('Rapport copié.')).catch(()=>{document.execCommand('copy');alert('Rapport copié.')});
+}
+
+// ---- Ajout / édition / suppression de catégories et d'actions (partagés via Supabase) ----
+function openCat(){
+  document.getElementById('cat-h').textContent='Nouvelle catégorie';
+  document.getElementById('cat-id').value='';
+  document.getElementById('cat-title').value='';
+  document.getElementById('cat-sub').value='';
+  document.getElementById('cat-color').value='#3b82f6';
+  document.getElementById('dlgCat').showModal();
+}
+function editCat(id){
+  const G=GROUPS.find(g=>g.id===id);if(!G)return;
+  document.getElementById('cat-h').textContent='Modifier la catégorie';
+  document.getElementById('cat-id').value=id;
+  document.getElementById('cat-title').value=G.t;
+  document.getElementById('cat-sub').value=G.s||'';
+  document.getElementById('cat-color').value=/^#[0-9a-fA-F]{6}$/.test(G.d)?G.d:'#3b82f6';
+  document.getElementById('dlgCat').showModal();
+}
+async function saveCat(){
+  const title=document.getElementById('cat-title').value.trim();
+  if(!title){alert('Indique un titre de catégorie.');return}
+  const id=document.getElementById('cat-id').value||uid('c');
+  const ex=customCats.find(c=>c.id===id);
+  const c={id,title,color:document.getElementById('cat-color').value,
+           subtitle:document.getElementById('cat-sub').value.trim(),position:ex?ex.position:Date.now()};
+  document.getElementById('dlgCat').close();
+  customCats=customCats.filter(x=>x.id!==id);customCats.push(c);   // affichage optimiste
+  rebuild();cache();render();
+  const {error}=await sb.from('categories').upsert(c,{onConflict:'id'});
+  setSync(error?'error':'online');
+  if(error){console.error(error);alert('Enregistrement en ligne échoué (table « categories » créée ?). La modif reste visible sur cet appareil.');}
+}
+function openTask(catId){
+  document.getElementById('tk-h').textContent='Nouvelle action';
+  document.getElementById('tk-id').value='';
+  const sel=document.getElementById('tk-cat');
+  sel.innerHTML=GROUPS.map(G=>'<option value="'+G.id+'">'+esc(G.t)+'</option>').join('');
+  if(catId)sel.value=catId;
+  document.getElementById('tk-title').value='';
+  document.getElementById('tk-sub').value='';
+  document.getElementById('tk-due').value='';
+  document.getElementById('tk-owner').value='MD';
+  document.getElementById('tk-prio').value='norm';
+  document.getElementById('dlgTask').showModal();
+}
+function editTask(id){
+  const t=T.find(x=>x.id===id);if(!t)return;
+  document.getElementById('tk-h').textContent='Modifier l\'action';
+  document.getElementById('tk-id').value=id;
+  const sel=document.getElementById('tk-cat');
+  sel.innerHTML=GROUPS.map(G=>'<option value="'+G.id+'">'+esc(G.t)+'</option>').join('');
+  sel.value=t.g;
+  document.getElementById('tk-title').value=t.t;
+  document.getElementById('tk-sub').value=t.s||'';
+  document.getElementById('tk-due').value=t.d||'';
+  document.getElementById('tk-owner').value=t.w;
+  document.getElementById('tk-prio').value=t.p;
+  document.getElementById('dlgTask').showModal();
+}
+async function saveTask(){
+  const title=document.getElementById('tk-title').value.trim();
+  if(!title){alert('Indique l’intitulé de l’action.');return}
+  const id=document.getElementById('tk-id').value||uid('x');
+  const ex=customTasks.find(t=>t.id===id);
+  const t={id,category_id:document.getElementById('tk-cat').value,title,
+           subtitle:document.getElementById('tk-sub').value.trim(),
+           owner:document.getElementById('tk-owner').value,
+           priority:document.getElementById('tk-prio').value,
+           due_date:document.getElementById('tk-due').value||null,position:ex?ex.position:Date.now()};
+  document.getElementById('dlgTask').close();
+  customTasks=customTasks.filter(x=>x.id!==id);customTasks.push(t);   // affichage optimiste
+  rebuild();cache();render();
+  const {error}=await sb.from('tasks').upsert(t,{onConflict:'id'});
+  setSync(error?'error':'online');
+  if(error){console.error(error);alert('Enregistrement en ligne échoué (table « tasks » créée ?). La modif reste visible sur cet appareil.');}
+}
+async function delTask(id){
+  if(!confirm('Supprimer cette action pour toute l’équipe ?'))return;
+  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];rebuild();cache();render();
+  await sb.from('tasks').delete().eq('id',id);
+  await sb.from('task_status').delete().eq('task_id',id);
+  setSync('online');
+}
+async function delCat(id){
+  const kids=customTasks.filter(t=>t.category_id===id);
+  if(!confirm('Supprimer cette catégorie'+(kids.length?' et ses '+kids.length+' action(s) ajoutée(s)':'')+' pour toute l’équipe ?'))return;
+  customCats=customCats.filter(c=>c.id!==id);
+  customTasks=customTasks.filter(t=>t.category_id!==id);
+  kids.forEach(t=>delete S[t.id]);
+  rebuild();cache();render();
+  await sb.from('tasks').delete().eq('category_id',id);
+  await sb.from('categories').delete().eq('id',id);
+  if(kids.length)await sb.from('task_status').delete().in('task_id',kids.map(t=>t.id));
+  setSync('online');
 }
 
 document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
