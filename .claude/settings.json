@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(git mv *)",
-      "Bash(awk '/<script>/{f=1;next} /<\\\\/script>/{f=0} f' index.html)",
-      "Bash(node --check /tmp/claude-1000/-home-clvx-Desktop-dashboard-de-pilotage/c0b7511a-c359-4856-86bc-6db6428feca1/scratchpad/app.js)"
-    ]
-  }
-}

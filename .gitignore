@@ -1,0 +1,6 @@
+# Config locale de l'agent Claude Code (spécifique à la machine, ne pas versionner)
+.claude/
+
+# Divers
+.DS_Store
+Thumbs.db
