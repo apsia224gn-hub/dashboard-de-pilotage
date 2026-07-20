@@ -25,6 +25,12 @@ header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px
 .cd-num{font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
 .cd-lbl{font-size:.72rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.1em}
 
+.sync{display:flex;align-items:center;gap:7px;font-size:.74rem;font-weight:600;color:var(--tx2);white-space:nowrap}
+.sync .dot{width:8px;height:8px;border-radius:50%;background:var(--tx3);transition:.2s}
+.sync.on .dot{background:var(--ok);box-shadow:0 0 0 3px rgba(34,197,94,.16)}
+.sync.off .dot{background:var(--warn)}
+.sync.err .dot{background:var(--err)}
+
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
 .kpi{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:14px 16px}
 .kpi .n{font-size:1.7rem;font-weight:800;line-height:1.1}
@@ -130,7 +136,10 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
 
 <header>
   <div class="wrap hdr">
-    <div class="logo">APS<span>IA</span><small>Dashboard de pilotage</small></div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div class="logo">APS<span>IA</span><small>Dashboard de pilotage</small></div>
+      <div id="sync" class="sync off"><span class="dot"></span><span class="txt">Connexion…</span></div>
+    </div>
     <div class="countdown">
       <div class="cd-num" id="cd">—</div>
       <div class="cd-lbl">jours avant le lancement · 5 oct. 2026</div>
@@ -197,10 +206,10 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 
   <div class="note">
-    <b>Comment l'équipe s'en sert.</b> Chaque associé ouvre ce fichier dans son navigateur et met à jour ses propres actions —
-    les statuts sont enregistrés localement sur son appareil. Chaque vendredi, chacun clique sur
-    « Générer le rapport hebdo » et colle le texte dans le groupe WhatsApp APSIA. Mohamed consolide et met à jour
-    la copie de référence déposée dans le dossier <i>06 — Pilotage et Dashboard</i>.
+    <b>Comment l'équipe s'en sert.</b> Chaque associé ouvre le dashboard en ligne et met à jour ses actions —
+    les statuts sont désormais <b>partagés en temps réel</b> entre les trois Parties (base Supabase). Ce que l'un
+    modifie, les autres le voient aussitôt, sur n'importe quel appareil. Chaque vendredi, chacun clique sur
+    « Générer le rapport hebdo » et colle le texte dans le groupe WhatsApp APSIA.
   </div>
 
   <footer>
@@ -219,6 +228,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 </dialog>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const PEOPLE={
   MD:{n:'Mohamed DIAWARA',r:'Porteur de Projet · 51 %',c:'av-md'},
@@ -288,13 +298,43 @@ const T=[
  {id:'C12',g:'COM',t:'Signature du premier contrat école',s:'50 élèves à 15 000 GNF ≈ 750 000 GNF bruts par mois',w:'MH',d:'2026-10-31',p:'crit'}
 ];
 
+const SUPABASE_URL='https://ozjhiygpzarmfxhewgmv.supabase.co';
+const SUPABASE_KEY='sb_publishable_00PIAm04rdIudlz7kRGt9w_3UU_KpjV';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
 const K='apsia_dash_v1';
-let S=JSON.parse(localStorage.getItem(K)||'{}');
+let S=JSON.parse(localStorage.getItem(K)||'{}');   // cache local : affichage instantané + repli hors ligne
 let F={who:'all',st:'all',q:''};
 const CY=['todo','wip','done','block'];
 const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
 
-function save(){localStorage.setItem(K,JSON.stringify(S))}
+function cache(){localStorage.setItem(K,JSON.stringify(S))}
+
+function setSync(state){
+  const el=document.getElementById('sync');if(!el)return;
+  el.className='sync '+(state==='online'?'on':state==='error'?'err':'off');
+  el.querySelector('.txt').textContent=
+    state==='online'?'Synchronisé':state==='error'?'Erreur de sync':'Hors ligne';
+}
+
+async function load(){
+  const {data,error}=await sb.from('task_status').select('task_id,status');
+  if(error){console.error(error);setSync('offline');return}
+  S={};data.forEach(r=>{S[r.task_id]=r.status});
+  cache();render();setSync('online');
+}
+
+let _rt;
+function renderSoon(){clearTimeout(_rt);_rt=setTimeout(render,80)}
+function subscribe(){
+  sb.channel('task_status-live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'task_status'},p=>{
+      if(p.eventType==='DELETE'){if(p.old&&p.old.task_id)delete S[p.old.task_id]}
+      else{S[p.new.task_id]=p.new.status}
+      cache();renderSoon();
+    })
+    .subscribe(s=>{if(s==='SUBSCRIBED')setSync('online')});
+}
 function st(id){return S[id]||'todo'}
 function fmt(d){const[y,m,j]=d.split('-');return j+'/'+m}
 function dueCls(d,s){
@@ -358,11 +398,20 @@ function stats(){
   }).join('');
 }
 
-function cyc(id){
-  S[id]=CY[(CY.indexOf(st(id))+1)%4];save();render();
+async function cyc(id){
+  const next=CY[(CY.indexOf(st(id))+1)%4];
+  S[id]=next;cache();render();                       // mise à jour optimiste immédiate
+  const {error}=await sb.from('task_status')
+    .upsert({task_id:id,status:next,updated_at:new Date().toISOString()},{onConflict:'task_id'});
+  setSync(error?'error':'online');
+  if(error)console.error(error);
 }
-function reset(){
-  if(confirm('Remettre toutes les actions à « À faire » ?')){S={};save();render()}
+async function reset(){
+  if(!confirm('Remettre toutes les actions à « À faire » ? Cela réinitialise le tableau pour toute l’équipe.'))return;
+  S={};cache();render();
+  const {error}=await sb.from('task_status').delete().neq('task_id','');
+  setSync(error?'error':'online');
+  if(error)console.error(error);
 }
 function report(){
   const dt=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
@@ -395,7 +444,9 @@ document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
 document.getElementById('q').oninput=e=>{F.q=e.target.value.toLowerCase();render()};
 
 document.getElementById('cd').textContent='J-'+Math.ceil((new Date('2026-10-05')-new Date())/864e5);
-render();
+render();          // rendu immédiat depuis le cache local
+load();            // puis synchronisation depuis Supabase
+subscribe();       // et abonnement temps réel aux changements des autres membres
 </script>
 </body>
 </html>
