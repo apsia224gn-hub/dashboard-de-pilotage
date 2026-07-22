@@ -9,11 +9,12 @@ et les autres voient les changements instantanément — sur n'importe quel appa
 ## Architecture
 
 - **`index.html`** — application complète en un seul fichier (HTML + CSS + JS, aucune étape de build).
-- **Supabase** — trois tables :
+- **Supabase** — quatre tables :
   - `task_status` : statut partagé de chaque action (à faire / en cours / fait / bloqué) ;
   - `categories` : catégories ajoutées ou modifiées depuis le dashboard ;
   - `tasks` : actions ajoutées, et modifications des actions du plan de base (surcharges).
-  - + diffusion **temps réel** des trois tables.
+  - `activity_log` : journal append-only indiquant qui a créé, modifié, supprimé ou changé un statut.
+  - + diffusion **temps réel** des quatre tables.
 - **Vercel** — hébergement statique du fichier `index.html`.
 - **`localStorage`** — cache local : affichage instantané au chargement et repli si le réseau est coupé.
 
@@ -56,7 +57,7 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 - **S'identifier** : au premier accès, choisir l'un des trois associés. Le profil est mémorisé
   sur l'appareil et présélectionné comme responsable lors de la création d'une action.
 - **Naviguer** : le menu sépare le `Dashboard`, les liens vers les `Dossiers` Drive et
-  l'`Historique` des dernières mises à jour de statut connues dans Supabase.
+  l'`Historique` partagé indiquant qui a fait quoi et à quelle heure.
 - **Changer un statut** : cliquer sur le badge d'une action → À faire → En cours → Fait → Bloqué.
 - **Ajouter une action** : bouton « ＋ Nouvelle action », ou le **＋** dans l'en-tête d'une catégorie
   (pré-sélectionne cette catégorie) → remplir le formulaire → **Enregistrer**.

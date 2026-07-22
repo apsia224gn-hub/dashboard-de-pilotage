@@ -709,6 +709,7 @@ function editCat(id){
 async function saveCat(){
   const title=document.getElementById('cat-title').value.trim();
   if(!title){alert('Indique un titre de catégorie.');return}
+  const editing=!!document.getElementById('cat-id').value;
   const id=document.getElementById('cat-id').value||uid('c');
   const ex=customCats.find(c=>c.id===id);
   const c={id,title,color:document.getElementById('cat-color').value,
@@ -719,6 +720,7 @@ async function saveCat(){
   const {error}=await sb.from('categories').upsert(c,{onConflict:'id'});
   setSync(error?'error':'online');
   if(error){console.error(error);alert('Enregistrement en ligne échoué (table « categories » créée ?). La modif reste visible sur cet appareil.');}
+  else await logActivity(editing?'category_updated':'category_created','category',id,title,null,null);
 }
 function openTask(catId){
   document.getElementById('tk-h').textContent='Nouvelle action';
@@ -750,6 +752,7 @@ function editTask(id){
 async function saveTask(){
   const title=document.getElementById('tk-title').value.trim();
   if(!title){alert('Indique l’intitulé de l’action.');return}
+  const editing=!!document.getElementById('tk-id').value;
   const id=document.getElementById('tk-id').value||uid('x');
   const ex=customTasks.find(t=>t.id===id);
   const t={id,category_id:document.getElementById('tk-cat').value,title,
@@ -763,25 +766,32 @@ async function saveTask(){
   const {error}=await sb.from('tasks').upsert(t,{onConflict:'id'});
   setSync(error?'error':'online');
   if(error){console.error(error);alert('Enregistrement en ligne échoué (table « tasks » créée ?). La modif reste visible sur cet appareil.');}
+  else await logActivity(editing?'task_updated':'task_created','task',id,title,null,null);
 }
 async function delTask(id){
+  const task=T.find(t=>t.id===id);
   if(!confirm('Supprimer cette action pour toute l’équipe ?'))return;
-  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];delete H[id];rebuild();cache();render();
-  await sb.from('tasks').delete().eq('id',id);
+  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];rebuild();cache();render();
+  const {error}=await sb.from('tasks').delete().eq('id',id);
   await sb.from('task_status').delete().eq('task_id',id);
-  setSync('online');
+  setSync(error?'error':'online');
+  if(error)console.error(error);
+  else await logActivity('task_deleted','task',id,task?task.t:id,null,null);
 }
 async function delCat(id){
+  const group=GROUPS.find(g=>g.id===id);
   const kids=customTasks.filter(t=>t.category_id===id);
   if(!confirm('Supprimer cette catégorie'+(kids.length?' et ses '+kids.length+' action(s) ajoutée(s)':'')+' pour toute l’équipe ?'))return;
   customCats=customCats.filter(c=>c.id!==id);
   customTasks=customTasks.filter(t=>t.category_id!==id);
-  kids.forEach(t=>{delete S[t.id];delete H[t.id]});
+  kids.forEach(t=>delete S[t.id]);
   rebuild();cache();render();
   await sb.from('tasks').delete().eq('category_id',id);
-  await sb.from('categories').delete().eq('id',id);
+  const {error}=await sb.from('categories').delete().eq('id',id);
   if(kids.length)await sb.from('task_status').delete().in('task_id',kids.map(t=>t.id));
-  setSync('online');
+  setSync(error?'error':'online');
+  if(error)console.error(error);
+  else await logActivity('category_deleted','category',id,group?group.t:id,null,null);
 }
 
 document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
