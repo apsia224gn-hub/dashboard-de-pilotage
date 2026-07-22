@@ -80,3 +80,7 @@ Dashboard interne aux 3 associés, sans page de connexion : l'accès repose sur 
 confidentialité de l'URL. La clé publishable donne un accès complet (lecture/écriture) aux
 tables du dashboard. Pour un contrôle plus strict, ajouter l'authentification Supabase
 (magic link) et restreindre les politiques RLS aux utilisateurs authentifiés.
+
+
+
+git branch --set-upstream-to=upstream/main main

@@ -108,3 +108,41 @@ begin
 exception when duplicate_object then
   null;
 end $$;
+
+
+-- ============================================================
+-- 6) Journal d'activité partagé (qui a fait quoi)
+-- ============================================================
+create table if not exists public.activity_log (
+  id           bigint generated always as identity primary key,
+  actor        text not null check (actor in ('MD','MK','MH')),
+  action       text not null,
+  entity_type  text not null default 'system',
+  entity_id    text,
+  entity_title text default '',
+  from_value   text,
+  to_value     text,
+  created_at   timestamptz not null default now()
+);
+
+create index if not exists activity_log_created_at_idx
+  on public.activity_log (created_at desc);
+
+alter table public.activity_log enable row level security;
+
+drop policy if exists "anon read activity"   on public.activity_log;
+drop policy if exists "anon insert activity" on public.activity_log;
+
+create policy "anon read activity" on public.activity_log
+  for select using (true);
+create policy "anon insert activity" on public.activity_log
+  for insert with check (true);
+
+-- Le journal est volontairement append-only : aucune politique anon
+-- d'UPDATE ou de DELETE, afin de préserver les événements enregistrés.
+do $$
+begin
+  alter publication supabase_realtime add table public.activity_log;
+exception when duplicate_object then
+  null;
+end $$;

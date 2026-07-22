@@ -146,10 +146,13 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 .due .tedit,.due .tdel{margin-left:4px;vertical-align:1px}
 .empty{padding:14px 15px;color:var(--tx3);font-size:.84rem;background:var(--bg2)}
 .history{display:grid;gap:9px;margin:16px 0 28px}
-.history-row{display:grid;grid-template-columns:118px 1fr auto;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bd2);border-radius:10px;padding:12px 14px}
-.history-title{font-size:.88rem;font-weight:600}
+.history-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:12px;background:var(--card);border:1px solid var(--bd2);border-radius:10px;padding:12px 14px}
+.history-row>.av{width:34px;height:34px}
+.history-title{font-size:.88rem;font-weight:500}
+.history-title b{font-weight:700}
 .history-meta{font-size:.75rem;color:var(--tx2);margin-top:2px}
 .history-time{font-size:.76rem;color:var(--tx2);text-align:right;white-space:nowrap}
+.history-warning{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.28);border-radius:10px;padding:14px 16px;color:#fcd34d;font-size:.84rem}
 .identity-intro{color:var(--tx2);font-size:.86rem;margin:-4px 0 16px}
 .identity-options{display:grid;gap:9px;margin:10px 0 18px}
 .identity-option{position:relative}
@@ -308,7 +311,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </section>
 
   <section class="view" id="view-historique">
-    <div class="page-head"><h1>Historique</h1><p>Dernière mise à jour connue pour chaque action, synchronisée depuis Supabase.</p></div>
+    <div class="page-head"><h1>Historique</h1><p>Journal partagé des actions réalisées par chaque associé.</p></div>
     <div class="history" id="history"></div>
   </section>
 
@@ -453,7 +456,8 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const K='apsia_dash_v1';
 const USER_KEY='apsia_current_user';
 let S=JSON.parse(localStorage.getItem(K)||'{}');            // statuts (cache local)
-let H=JSON.parse(localStorage.getItem(K+'_history')||'{}'); // dernière modification connue par action
+let ACTIVITIES=JSON.parse(localStorage.getItem(K+'_activities')||'[]'); // journal partagé (cache local)
+let historyAvailable=true;
 let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégories ajoutées via Supabase
 let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
 let CURRENT=localStorage.getItem(USER_KEY);
@@ -482,7 +486,7 @@ rebuild();
 
 function cache(){
   localStorage.setItem(K,JSON.stringify(S));
-  localStorage.setItem(K+'_history',JSON.stringify(H));
+  localStorage.setItem(K+'_activities',JSON.stringify(ACTIVITIES.slice(0,200)));
   localStorage.setItem(K+'_cats',JSON.stringify(customCats));
   localStorage.setItem(K+'_tasks',JSON.stringify(customTasks));
 }
@@ -496,15 +500,19 @@ function setSync(state){
 }
 
 async function load(){
-  const [rs,rc,rt]=await Promise.all([
+  const [rs,rc,rt,ra]=await Promise.all([
     sb.from('task_status').select('task_id,status,updated_at'),
     sb.from('categories').select('*').order('position'),
-    sb.from('tasks').select('*').order('position')
+    sb.from('tasks').select('*').order('position'),
+    sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(200)
   ]);
-  if(!rs.error){S={};H={};rs.data.forEach(r=>{S[r.task_id]=r.status;H[r.task_id]={status:r.status,updated_at:r.updated_at}})}
+  if(!rs.error){S={};rs.data.forEach(r=>{S[r.task_id]=r.status})}
   if(!rc.error)customCats=rc.data;
   if(!rt.error)customTasks=rt.data;
+  historyAvailable=!ra.error;
+  if(!ra.error)ACTIVITIES=ra.data||[];
   rebuild();cache();render();
+  if(historyAvailable)subscribeHistory();
   setSync(rs.error||rc.error||rt.error?'offline':'online');
   if(rc.error||rt.error)console.error(rc.error||rt.error);
 }
@@ -516,13 +524,22 @@ function renderSoon(){clearTimeout(_rt);_rt=setTimeout(render,80)}
 function subscribe(){
     sb.channel('apsia-live')
     .on('postgres_changes',{event:'*',schema:'public',table:'task_status'},p=>{
-      if(p.eventType==='DELETE'){if(p.old&&p.old.task_id){delete S[p.old.task_id];delete H[p.old.task_id]}}
-      else{S[p.new.task_id]=p.new.status;H[p.new.task_id]={status:p.new.status,updated_at:p.new.updated_at}}
+      if(p.eventType==='DELETE'){if(p.old&&p.old.task_id)delete S[p.old.task_id]}
+      else S[p.new.task_id]=p.new.status;
       cache();renderSoon();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'categories'},refetchCats)
     .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},refetchTasks)
     .subscribe(s=>{if(s==='SUBSCRIBED')setSync('online')});
+}
+let activitySubscribed=false;
+function subscribeHistory(){
+  if(activitySubscribed)return;activitySubscribed=true;
+  sb.channel('apsia-history')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'activity_log'},p=>{
+      if(!ACTIVITIES.some(a=>a.id===p.new.id))ACTIVITIES.unshift(p.new);
+      ACTIVITIES=ACTIVITIES.slice(0,200);cache();renderSoon();
+    }).subscribe();
 }
 function st(id){return S[id]||'todo'}
 function fmt(d){if(!d)return '—';const[y,m,j]=d.split('-');return j+'/'+m}
@@ -572,15 +589,37 @@ function render(){
 
 function renderHistory(){
   const el=document.getElementById('history');if(!el)return;
-  const rows=Object.keys(H).map(id=>({id,...H[id]}))
-    .filter(x=>T.some(t=>t.id===x.id))
-    .sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
-  if(!rows.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">Aucune mise à jour de statut enregistrée.</div>';return}
-  el.innerHTML=rows.map(x=>{
-    const t=T.find(v=>v.id===x.id),G=GROUPS.find(v=>v.id===t.g);
-    const dt=x.updated_at?new Date(x.updated_at).toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'}):'Date inconnue';
-    return '<div class="history-row"><span class="st st-'+x.status+'">'+LBL[x.status]+'</span><div><div class="history-title">'+esc(t.t)+'</div><div class="history-meta">'+esc(x.id+' · '+(G?G.t:t.g))+'</div></div><div class="history-time">'+esc(dt)+'</div></div>';
+  if(!historyAvailable){el.innerHTML='<div class="history-warning">Le journal partagé doit être activé dans Supabase en exécutant la dernière version de <b>supabase/schema.sql</b>.</div>';return}
+  if(!ACTIVITIES.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">Aucune activité enregistrée pour le moment.</div>';return}
+  el.innerHTML=ACTIVITIES.map(a=>{
+    const P=PEOPLE[a.actor]||PEOPLE.ALL;
+    const dt=a.created_at?new Date(a.created_at).toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'}):'Date inconnue';
+    return '<div class="history-row"><span class="av '+P.c+'">'+esc(a.actor)+'</span><div><div class="history-title"><b>'+esc(P.n)+'</b> '+esc(activityText(a))+'</div><div class="history-meta">'+esc(a.entity_id||'Journal APSIA')+'</div></div><div class="history-time">'+esc(dt)+'</div></div>';
   }).join('');
+}
+
+function activityText(a){
+  const title='« '+(a.entity_title||a.entity_id||'élément')+' »';
+  if(a.action==='status_changed')return 'a passé '+title+' de '+(LBL[a.from_value]||a.from_value||'—')+' à '+(LBL[a.to_value]||a.to_value||'—');
+  if(a.action==='task_created')return 'a créé l’action '+title;
+  if(a.action==='task_updated')return 'a modifié l’action '+title;
+  if(a.action==='task_deleted')return 'a supprimé l’action '+title;
+  if(a.action==='category_created')return 'a créé la catégorie '+title;
+  if(a.action==='category_updated')return 'a modifié la catégorie '+title;
+  if(a.action==='category_deleted')return 'a supprimé la catégorie '+title;
+  if(a.action==='statuses_reset')return 'a réinitialisé tous les statuts à « À faire »';
+  return 'a effectué une modification sur '+title;
+}
+
+async function logActivity(action,entityType,entityId,entityTitle,fromValue,toValue){
+  if(!CURRENT)return;
+  const event={actor:CURRENT,action,entity_type:entityType,entity_id:entityId||null,
+    entity_title:entityTitle||'',from_value:fromValue||null,to_value:toValue||null};
+  const {data,error}=await sb.from('activity_log').insert(event).select().single();
+  if(error){historyAvailable=false;renderHistory();console.error(error);return}
+  historyAvailable=true;
+  if(data&&!ACTIVITIES.some(a=>a.id===data.id))ACTIVITIES.unshift(data);
+  ACTIVITIES=ACTIVITIES.slice(0,200);cache();renderHistory();subscribeHistory();
 }
 
 function stats(){
@@ -609,20 +648,22 @@ function stats(){
 }
 
 async function cyc(id){
-  const next=CY[(CY.indexOf(st(id))+1)%4];
+  const previous=st(id),next=CY[(CY.indexOf(previous)+1)%4],task=T.find(t=>t.id===id);
   const now=new Date().toISOString();
-  S[id]=next;H[id]={status:next,updated_at:now};cache();render(); // mise à jour optimiste immédiate
+  S[id]=next;cache();render(); // mise à jour optimiste immédiate
   const {error}=await sb.from('task_status')
     .upsert({task_id:id,status:next,updated_at:now},{onConflict:'task_id'});
   setSync(error?'error':'online');
   if(error)console.error(error);
+  else await logActivity('status_changed','task',id,task?task.t:id,previous,next);
 }
 async function reset(){
   if(!confirm('Remettre toutes les actions à « À faire » ? Cela réinitialise le tableau pour toute l’équipe.'))return;
-  S={};H={};cache();render();
+  S={};cache();render();
   const {error}=await sb.from('task_status').delete().neq('task_id','');
   setSync(error?'error':'online');
   if(error)console.error(error);
+  else await logActivity('statuses_reset','system',null,'Tous les statuts',null,'todo');
 }
 function report(){
   const dt=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
