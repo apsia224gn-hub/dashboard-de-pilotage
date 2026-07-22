@@ -53,6 +53,10 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 
 ## Utilisation
 
+- **S'identifier** : au premier accès, choisir l'un des trois associés. Le profil est mémorisé
+  sur l'appareil et présélectionné comme responsable lors de la création d'une action.
+- **Naviguer** : le menu sépare le `Dashboard`, les liens vers les `Dossiers` Drive et
+  l'`Historique` des dernières mises à jour de statut connues dans Supabase.
 - **Changer un statut** : cliquer sur le badge d'une action → À faire → En cours → Fait → Bloqué.
 - **Ajouter une action** : bouton « ＋ Nouvelle action », ou le **＋** dans l'en-tête d'une catégorie
   (pré-sélectionne cette catégorie) → remplir le formulaire → **Enregistrer**.
@@ -66,6 +70,9 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 - **Rapport hebdo** : bouton « Générer le rapport hebdo » → copier → coller dans le groupe WhatsApp APSIA.
 - **Réinitialiser les statuts** : remet tous les statuts à « À faire » **pour toute l'équipe**
   (ne supprime pas les actions ajoutées).
+
+> L'identification nominative personnalise l'interface ; ce n'est pas un mécanisme
+> d'authentification. La protection d'accès reste celle décrite dans la section Sécurité.
 
 ## Sécurité
 

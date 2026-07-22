@@ -31,6 +31,20 @@ header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px
 .sync.off .dot{background:var(--warn)}
 .sync.err .dot{background:var(--err)}
 
+.hdr-actions{display:flex;align-items:center;justify-content:flex-end;gap:16px}
+.user-pill{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--bd);color:var(--tx);border-radius:99px;padding:6px 11px 6px 7px;font:600 .78rem/1.2 inherit;cursor:pointer;transition:.15s}
+.user-pill:hover{background:var(--elev);border-color:var(--accent)}
+.user-pill .av{width:28px;height:28px}
+.main-nav{display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd2)}
+.nav-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;color:var(--tx2);border-radius:8px;padding:8px 13px;font:600 .84rem/1 inherit;cursor:pointer;transition:.15s}
+.nav-btn:hover{background:var(--surface);color:var(--tx)}
+.nav-btn.on{background:rgba(59,130,246,.16);color:#bfdbfe}
+.view{display:none}
+.view.on{display:block}
+.page-head{margin:26px 0 18px}
+.page-head h1{font-size:1.45rem;line-height:1.25}
+.page-head p{color:var(--tx2);font-size:.86rem;margin-top:4px}
+
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
 .kpi{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:14px 16px}
 .kpi .n{font-size:1.7rem;font-weight:800;line-height:1.1}
@@ -113,7 +127,7 @@ input.search::placeholder{color:var(--tx3)}
 .note{background:rgba(245,158,11,.08);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:12px 16px;font-size:.85rem;color:var(--tx2);margin:16px 0}
 .note b{color:var(--tx)}
 
-dialog{background:var(--card);border:1px solid var(--bd);border-radius:12px;color:var(--tx);max-width:620px;width:92%;padding:22px;max-height:90vh;overflow:auto}
+dialog{background:var(--card);border:1px solid var(--bd);border-radius:12px;color:var(--tx);max-width:620px;width:92%;padding:22px;max-height:90vh;overflow:auto;margin:auto}
 dialog::backdrop{background:rgba(0,0,0,.72)}
 textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:ui-monospace,monospace;font-size:.79rem;padding:12px;resize:vertical;line-height:1.6}
 
@@ -131,6 +145,20 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 .gtitle .gedit,.gtitle .gdel{margin-left:4px}
 .due .tedit,.due .tdel{margin-left:4px;vertical-align:1px}
 .empty{padding:14px 15px;color:var(--tx3);font-size:.84rem;background:var(--bg2)}
+.history{display:grid;gap:9px;margin:16px 0 28px}
+.history-row{display:grid;grid-template-columns:118px 1fr auto;align-items:center;gap:14px;background:var(--card);border:1px solid var(--bd2);border-radius:10px;padding:12px 14px}
+.history-title{font-size:.88rem;font-weight:600}
+.history-meta{font-size:.75rem;color:var(--tx2);margin-top:2px}
+.history-time{font-size:.76rem;color:var(--tx2);text-align:right;white-space:nowrap}
+.identity-intro{color:var(--tx2);font-size:.86rem;margin:-4px 0 16px}
+.identity-options{display:grid;gap:9px;margin:10px 0 18px}
+.identity-option{position:relative}
+.identity-option input{position:absolute;opacity:0;pointer-events:none}
+.identity-option label{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;cursor:pointer;transition:.15s}
+.identity-option label:hover{background:var(--surface)}
+.identity-option input:checked+label{border-color:var(--accent);background:rgba(59,130,246,.12);box-shadow:0 0 0 2px rgba(59,130,246,.12)}
+.identity-option .who{font-size:.9rem;font-weight:700}
+.identity-option .role{font-size:.74rem;color:var(--tx2)}
 
 footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;border-top:1px solid var(--bd2);margin-top:34px}
 
@@ -142,12 +170,14 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   .task>div:nth-child(2){grid-area:body}
   .task>.own{grid-area:own;justify-self:start}
   .task>.due{grid-area:due;justify-self:end;text-align:right;white-space:nowrap}
+  .history-row{grid-template-columns:auto 1fr}.history-time{grid-column:2;text-align:left}
 }
 /* Téléphone */
 @media(max-width:560px){
   .wrap{padding:0 14px}
   header{padding:12px 0}
   .hdr{gap:10px 12px}
+  .hdr-actions{gap:10px}.user-pill .user-name{display:none}.main-nav{overflow-x:auto}.nav-btn{flex:1;justify-content:center;min-width:max-content}
   .logo{font-size:1.15rem}
   .cd-num{font-size:1.4rem}
   .cd-lbl{font-size:.64rem}
@@ -171,7 +201,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
 }
 @media print{
   body{background:#fff;color:#000}
-  .filters,.actions,header .countdown,.drive{display:none}
+  .filters,.actions,header .countdown,.drive,.main-nav,.user-pill{display:none}
   .task,.kpi,.pcard,.ghd{background:#fff!important;border-color:#ccc!important;color:#000!important}
   .tt,.gtitle,.kpi .n{color:#000!important}
 }
@@ -185,14 +215,26 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
       <div class="logo">APS<span>IA</span><small>Dashboard de pilotage</small></div>
       <div id="sync" class="sync off"><span class="dot"></span><span class="txt">Connexion…</span></div>
     </div>
-    <div class="countdown">
-      <div class="cd-num" id="cd">—</div>
-      <div class="cd-lbl">jours avant le lancement · 5 oct. 2026</div>
+    <div class="hdr-actions">
+      <button class="user-pill" id="user-pill" onclick="openIdentity()" title="Changer d’utilisateur">
+        <span class="av av-all" id="user-avatar">?</span><span class="user-name" id="user-name">S’identifier</span>
+      </button>
+      <div class="countdown">
+        <div class="cd-num" id="cd">—</div>
+        <div class="cd-lbl">jours avant le lancement · 5 oct. 2026</div>
+      </div>
     </div>
   </div>
+  <nav class="wrap main-nav" aria-label="Navigation principale">
+    <button class="nav-btn on" data-view="dashboard">▦ Dashboard</button>
+    <button class="nav-btn" data-view="dossiers">▤ Dossiers</button>
+    <button class="nav-btn" data-view="historique">↻ Historique</button>
+  </nav>
 </header>
 
 <div class="wrap">
+
+  <section class="view on" id="view-dashboard">
 
   <div class="kpis">
     <div class="kpi"><div class="n" id="k-total">0</div><div class="l">Actions au total</div></div>
@@ -203,24 +245,6 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
       <div class="n" id="k-pct">0 %</div><div class="l">Avancement global</div>
       <div class="bar"><i id="k-bar" style="width:0%"></i></div>
     </div>
-  </div>
-
-  <h2>Dossiers du projet <span class="tag">Google Drive</span></h2>
-  <div class="drive">
-    <a class="dcard dmain" href="https://drive.google.com/drive/folders/1SvbGXRriz9C59bz7BLllgeeNX3oZuWpz" target="_blank">
-      <div class="dt">APSIA — Projet</div><div class="dd">Dossier racine · tous les fichiers du projet</div></a>
-    <a class="dcard" href="https://drive.google.com/drive/folders/1sBEHDWkOGgntlrlIYnEpjtMv_anyKq4S" target="_blank" rel="noopener">
-      <div class="dt">Admin et Juridique</div><div class="dd">Contrat tripartite, RCCM, NIF, NDA, OAPI, CGU</div></a>
-    <a class="dcard" href="https://drive.google.com/drive/folders/1tgOMh0xdMCotfkcZ6jKLGyivtlthld2t" target="_blank" rel="noopener">
-      <div class="dt">Technique et Informatique</div><div class="dd">Specs, architecture, dossier interne, recette</div></a>
-    <a class="dcard" href="https://drive.google.com/drive/folders/13nQwlQRsqLQI92YSlS8rd89JudmlGXY0" target="_blank" rel="noopener">
-      <div class="dt">Marketing et Commercial</div><div class="dd">Pipeline écoles, argumentaires, pilotes</div></a>
-    <a class="dcard" href="https://drive.google.com/drive/folders/1GLtGaznC72bawNpNC6fXd6FMxugTc5xZ" target="_blank" rel="noopener">
-      <div class="dt">Communication</div><div class="dd">Réseaux sociaux, contenus, kit visuel</div></a>
-    <a class="dcard" href="https://drive.google.com/drive/folders/1WOp5DVB6s3zGFulaae4NdPTyY8zEsVLM" target="_blank" rel="noopener">
-      <div class="dt">Finances</div><div class="dd">Plan financier, compte de projet, relevés mensuels</div></a>
-    <a class="dcard" href="https://drive.google.com/drive/folders/1Mm5i9dxof2cLL6iOQ2hnv1KdIt4sg_6a" target="_blank" rel="noopener">
-      <div class="dt">Pilotage Opérationnel</div><div class="dd">Ce dashboard, comptes rendus, rapports hebdo</div></a>
   </div>
 
   <h2>Charge par associé</h2>
@@ -261,12 +285,52 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
     modifie, les autres le voient aussitôt, sur n'importe quel appareil. Chaque vendredi, chacun clique sur
     « Générer le rapport hebdo » et colle le texte dans le groupe WhatsApp APSIA.
   </div>
+  </section>
+
+  <section class="view" id="view-dossiers">
+    <div class="page-head"><h1>Dossiers du projet</h1><p>Accès rapide aux espaces de travail partagés sur Google Drive.</p></div>
+    <div class="drive">
+      <a class="dcard dmain" href="https://drive.google.com/drive/folders/1SvbGXRriz9C59bz7BLllgeeNX3oZuWpz" target="_blank" rel="noopener">
+        <div class="dt">APSIA — Projet</div><div class="dd">Dossier racine · tous les fichiers du projet</div></a>
+      <a class="dcard" href="https://drive.google.com/drive/folders/1sBEHDWkOGgntlrlIYnEpjtMv_anyKq4S" target="_blank" rel="noopener">
+        <div class="dt">Admin et Juridique</div><div class="dd">Contrat tripartite, RCCM, NIF, NDA, OAPI, CGU</div></a>
+      <a class="dcard" href="https://drive.google.com/drive/folders/1tgOMh0xdMCotfkcZ6jKLGyivtlthld2t" target="_blank" rel="noopener">
+        <div class="dt">Technique et Informatique</div><div class="dd">Specs, architecture, dossier interne, recette</div></a>
+      <a class="dcard" href="https://drive.google.com/drive/folders/13nQwlQRsqLQI92YSlS8rd89JudmlGXY0" target="_blank" rel="noopener">
+        <div class="dt">Marketing et Commercial</div><div class="dd">Pipeline écoles, argumentaires, pilotes</div></a>
+      <a class="dcard" href="https://drive.google.com/drive/folders/1GLtGaznC72bawNpNC6fXd6FMxugTc5xZ" target="_blank" rel="noopener">
+        <div class="dt">Communication</div><div class="dd">Réseaux sociaux, contenus, kit visuel</div></a>
+      <a class="dcard" href="https://drive.google.com/drive/folders/1WOp5DVB6s3zGFulaae4NdPTyY8zEsVLM" target="_blank" rel="noopener">
+        <div class="dt">Finances</div><div class="dd">Plan financier, compte de projet, relevés mensuels</div></a>
+      <a class="dcard" href="https://drive.google.com/drive/folders/1Mm5i9dxof2cLL6iOQ2hnv1KdIt4sg_6a" target="_blank" rel="noopener">
+        <div class="dt">Pilotage Opérationnel</div><div class="dd">Ce dashboard, comptes rendus, rapports hebdo</div></a>
+    </div>
+  </section>
+
+  <section class="view" id="view-historique">
+    <div class="page-head"><h1>Historique</h1><p>Dernière mise à jour connue pour chaque action, synchronisée depuis Supabase.</p></div>
+    <div class="history" id="history"></div>
+  </section>
 
   <footer>
     APSIA © 2026 · Dashboard de pilotage interne · réservé aux trois Parties du contrat tripartite<br>
     Lancement public cible : lundi 5 octobre 2026 · Conakry, Guinée
   </footer>
 </div>
+
+<dialog id="dlgIdentity">
+  <h2 style="margin:0 0 8px">Bienvenue sur APSIA</h2>
+  <p class="identity-intro">Identifiez-vous pour personnaliser votre espace de pilotage.</p>
+  <div class="identity-options">
+    <div class="identity-option"><input type="radio" name="identity" id="identity-MD" value="MD"><label for="identity-MD"><span class="av av-md">MD</span><span><div class="who">Mohamed DIAWARA</div><div class="role">Porteur de Projet · 51 %</div></span></label></div>
+    <div class="identity-option"><input type="radio" name="identity" id="identity-MK" value="MK"><label for="identity-MK"><span class="av av-mk">MK</span><span><div class="who">Mamadou Cellou KANTÉ</div><div class="role">Développeur · 29 %</div></span></label></div>
+    <div class="identity-option"><input type="radio" name="identity" id="identity-MH" value="MH"><label for="identity-MH"><span class="av av-mh">MH</span><span><div class="who">Mohamed HADY</div><div class="role">Apporteur d’Affaires · 20 %</div></span></label></div>
+  </div>
+  <div class="actions" style="margin:0">
+    <button class="btn btn-p" onclick="identify()">Continuer</button>
+    <button class="btn" id="identity-cancel" onclick="document.getElementById('dlgIdentity').close()">Annuler</button>
+  </div>
+</dialog>
 
 <dialog id="dlg">
   <h2 style="margin:0 0 12px">Rapport hebdomadaire</h2>
@@ -387,9 +451,13 @@ const SUPABASE_KEY='sb_publishable_00PIAm04rdIudlz7kRGt9w_3UU_KpjV';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const K='apsia_dash_v1';
+const USER_KEY='apsia_current_user';
 let S=JSON.parse(localStorage.getItem(K)||'{}');            // statuts (cache local)
+let H=JSON.parse(localStorage.getItem(K+'_history')||'{}'); // dernière modification connue par action
 let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégories ajoutées via Supabase
 let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
+let CURRENT=localStorage.getItem(USER_KEY);
+if(!PEOPLE[CURRENT]||CURRENT==='ALL')CURRENT='';
 let F={who:'all',st:'all',q:''};
 const CY=['todo','wip','done','block'];
 const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
@@ -414,6 +482,7 @@ rebuild();
 
 function cache(){
   localStorage.setItem(K,JSON.stringify(S));
+  localStorage.setItem(K+'_history',JSON.stringify(H));
   localStorage.setItem(K+'_cats',JSON.stringify(customCats));
   localStorage.setItem(K+'_tasks',JSON.stringify(customTasks));
 }
@@ -428,11 +497,11 @@ function setSync(state){
 
 async function load(){
   const [rs,rc,rt]=await Promise.all([
-    sb.from('task_status').select('task_id,status'),
+    sb.from('task_status').select('task_id,status,updated_at'),
     sb.from('categories').select('*').order('position'),
     sb.from('tasks').select('*').order('position')
   ]);
-  if(!rs.error){S={};rs.data.forEach(r=>{S[r.task_id]=r.status})}
+  if(!rs.error){S={};H={};rs.data.forEach(r=>{S[r.task_id]=r.status;H[r.task_id]={status:r.status,updated_at:r.updated_at}})}
   if(!rc.error)customCats=rc.data;
   if(!rt.error)customTasks=rt.data;
   rebuild();cache();render();
@@ -445,10 +514,10 @@ async function refetchTasks(){const{data,error}=await sb.from('tasks').select('*
 let _rt;
 function renderSoon(){clearTimeout(_rt);_rt=setTimeout(render,80)}
 function subscribe(){
-  sb.channel('apsia-live')
+    sb.channel('apsia-live')
     .on('postgres_changes',{event:'*',schema:'public',table:'task_status'},p=>{
-      if(p.eventType==='DELETE'){if(p.old&&p.old.task_id)delete S[p.old.task_id]}
-      else{S[p.new.task_id]=p.new.status}
+      if(p.eventType==='DELETE'){if(p.old&&p.old.task_id){delete S[p.old.task_id];delete H[p.old.task_id]}}
+      else{S[p.new.task_id]=p.new.status;H[p.new.task_id]={status:p.new.status,updated_at:p.new.updated_at}}
       cache();renderSoon();
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'categories'},refetchCats)
@@ -498,6 +567,20 @@ function render(){
     g.appendChild(d);
   });
   stats();
+  renderHistory();
+}
+
+function renderHistory(){
+  const el=document.getElementById('history');if(!el)return;
+  const rows=Object.keys(H).map(id=>({id,...H[id]}))
+    .filter(x=>T.some(t=>t.id===x.id))
+    .sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
+  if(!rows.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">Aucune mise à jour de statut enregistrée.</div>';return}
+  el.innerHTML=rows.map(x=>{
+    const t=T.find(v=>v.id===x.id),G=GROUPS.find(v=>v.id===t.g);
+    const dt=x.updated_at?new Date(x.updated_at).toLocaleString('fr-FR',{dateStyle:'medium',timeStyle:'short'}):'Date inconnue';
+    return '<div class="history-row"><span class="st st-'+x.status+'">'+LBL[x.status]+'</span><div><div class="history-title">'+esc(t.t)+'</div><div class="history-meta">'+esc(x.id+' · '+(G?G.t:t.g))+'</div></div><div class="history-time">'+esc(dt)+'</div></div>';
+  }).join('');
 }
 
 function stats(){
@@ -527,15 +610,16 @@ function stats(){
 
 async function cyc(id){
   const next=CY[(CY.indexOf(st(id))+1)%4];
-  S[id]=next;cache();render();                       // mise à jour optimiste immédiate
+  const now=new Date().toISOString();
+  S[id]=next;H[id]={status:next,updated_at:now};cache();render(); // mise à jour optimiste immédiate
   const {error}=await sb.from('task_status')
-    .upsert({task_id:id,status:next,updated_at:new Date().toISOString()},{onConflict:'task_id'});
+    .upsert({task_id:id,status:next,updated_at:now},{onConflict:'task_id'});
   setSync(error?'error':'online');
   if(error)console.error(error);
 }
 async function reset(){
   if(!confirm('Remettre toutes les actions à « À faire » ? Cela réinitialise le tableau pour toute l’équipe.'))return;
-  S={};cache();render();
+  S={};H={};cache();render();
   const {error}=await sb.from('task_status').delete().neq('task_id','');
   setSync(error?'error':'online');
   if(error)console.error(error);
@@ -604,7 +688,7 @@ function openTask(catId){
   document.getElementById('tk-title').value='';
   document.getElementById('tk-sub').value='';
   document.getElementById('tk-due').value='';
-  document.getElementById('tk-owner').value='MD';
+  document.getElementById('tk-owner').value=CURRENT||'MD';
   document.getElementById('tk-prio').value='norm';
   document.getElementById('dlgTask').showModal();
 }
@@ -641,7 +725,7 @@ async function saveTask(){
 }
 async function delTask(id){
   if(!confirm('Supprimer cette action pour toute l’équipe ?'))return;
-  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];rebuild();cache();render();
+  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];delete H[id];rebuild();cache();render();
   await sb.from('tasks').delete().eq('id',id);
   await sb.from('task_status').delete().eq('task_id',id);
   setSync('online');
@@ -651,7 +735,7 @@ async function delCat(id){
   if(!confirm('Supprimer cette catégorie'+(kids.length?' et ses '+kids.length+' action(s) ajoutée(s)':'')+' pour toute l’équipe ?'))return;
   customCats=customCats.filter(c=>c.id!==id);
   customTasks=customTasks.filter(t=>t.category_id!==id);
-  kids.forEach(t=>delete S[t.id]);
+  kids.forEach(t=>{delete S[t.id];delete H[t.id]});
   rebuild();cache();render();
   await sb.from('tasks').delete().eq('category_id',id);
   await sb.from('categories').delete().eq('id',id);
@@ -666,10 +750,38 @@ document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
 });
 document.getElementById('q').oninput=e=>{F.q=e.target.value.toLowerCase();render()};
 
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+name));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
+  if(name==='historique')renderHistory();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+function updateIdentity(){
+  const pill=document.getElementById('user-pill'),avatar=document.getElementById('user-avatar'),name=document.getElementById('user-name');
+  if(!CURRENT){avatar.className='av av-all';avatar.textContent='?';name.textContent='S’identifier';pill.title='S’identifier';return}
+  const P=PEOPLE[CURRENT];avatar.className='av '+P.c;avatar.textContent=CURRENT;name.textContent=P.n.split(' ').slice(-1)[0];pill.title='Connecté comme '+P.n+' · cliquer pour changer';
+}
+function openIdentity(){
+  document.querySelectorAll('input[name="identity"]').forEach(r=>r.checked=r.value===CURRENT);
+  document.getElementById('identity-cancel').style.display=CURRENT?'inline-block':'none';
+  document.getElementById('dlgIdentity').showModal();
+}
+function identify(){
+  const selected=document.querySelector('input[name="identity"]:checked');
+  if(!selected){alert('Choisissez votre profil pour continuer.');return}
+  CURRENT=selected.value;localStorage.setItem(USER_KEY,CURRENT);updateIdentity();
+  document.getElementById('dlgIdentity').close();
+}
+document.getElementById('dlgIdentity').addEventListener('cancel',e=>{if(!CURRENT)e.preventDefault()});
+
 document.getElementById('cd').textContent='J-'+Math.ceil((new Date('2026-10-05')-new Date())/864e5);
+updateIdentity();
 render();          // rendu immédiat depuis le cache local
 load();            // puis synchronisation depuis Supabase
 subscribe();       // et abonnement temps réel aux changements des autres membres
+if(!CURRENT)setTimeout(openIdentity,0);
 </script>
 </body>
 </html>
