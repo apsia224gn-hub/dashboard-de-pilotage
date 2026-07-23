@@ -315,24 +315,17 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
     <input class="search" id="q" placeholder="Rechercher une action…">
   </div>
 
-  <div class="actions" style="margin:4px 0 16px">
-    <button class="btn btn-p" onclick="openTask()">＋ Nouvelle action</button>
-    <button class="btn" onclick="openCat()">＋ Nouvelle catégorie</button>
-  </div>
-
   <div id="groups"></div>
 
   <div class="actions">
     <button class="btn btn-p" onclick="report()">Générer le rapport hebdo</button>
     <button class="btn" onclick="window.print()">Imprimer / PDF</button>
-    <button class="btn btn-d" onclick="reset()">Réinitialiser les statuts</button>
   </div>
 
   <div class="note">
-    <b>Comment l'équipe s'en sert.</b> Chaque associé ouvre le dashboard en ligne et met à jour ses actions —
-    les statuts sont désormais <b>partagés en temps réel</b> entre les trois Parties (base Supabase). Ce que l'un
-    modifie, les autres le voient aussitôt, sur n'importe quel appareil. Chaque vendredi, chacun clique sur
-    « Générer le rapport hebdo » et colle le texte dans le groupe WhatsApp APSIA.
+    <b>Vue collective en lecture seule.</b> Le Dashboard présente l’avancement global partagé entre les trois
+    Parties. Chaque associé gère ses actions et leurs statuts depuis <b>Mon espace</b>. Les changements sont
+    ensuite visibles ici en temps réel.
   </div>
   </section>
 
@@ -362,14 +355,17 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </section>
 
   <section class="view" id="view-personal">
-    <div class="page-head"><h1>Mon espace</h1><p>Vos tâches personnelles, visibles uniquement depuis votre compte.</p></div>
+    <div class="page-head"><h1>Mon espace</h1><p>Gérez vos actions du plan et vos tâches personnelles depuis un seul endroit.</p></div>
     <div class="panel-toolbar">
       <div class="actions" style="margin:0">
-        <button class="btn btn-p" onclick="openPersonalTask()">＋ Nouvelle tâche</button>
+        <button class="btn btn-p" onclick="openPersonalTask()">＋ Tâche personnelle</button>
         <button class="btn" onclick="openRequest()">↗ Demander une tâche</button>
       </div>
       <div class="panel-summary" id="personal-summary"></div>
     </div>
+    <h2>Mes actions du plan <span class="tag" id="assigned-count">0</span></h2>
+    <div class="personal-list" id="assigned-list"></div>
+    <h2>Mes tâches personnelles <span class="tag" id="private-count">0</span></h2>
     <div class="personal-list" id="personal-list"></div>
   </section>
 
@@ -690,22 +686,17 @@ function render(){
     });
     if(!vis.length&&!(G.del&&!ts.length))return;   // masquer si filtré ; garder une catégorie ajoutée vide
     const d=document.createElement('div');d.className='grp';
-    d.innerHTML='<div class="ghd"><div class="gtitle"><span class="gdot" style="background:'+G.d+'"></span>'+esc(G.t)+
-      '<button class="gedit" title="Modifier la catégorie" onclick="editCat(\''+G.id+'\')">✎</button>'+
-      (G.del?'<button class="gdel" title="Supprimer la catégorie" onclick="delCat(\''+G.id+'\')">×</button>':'')+'</div>'+
-      '<div class="gmeta">'+done+' / '+ts.length+(G.s?' · '+esc(G.s):'')+
-      '<button class="gadd" title="Ajouter une action dans cette catégorie" onclick="openTask(\''+G.id+'\')">＋</button></div></div>'+
+    d.innerHTML='<div class="ghd"><div class="gtitle"><span class="gdot" style="background:'+G.d+'"></span>'+esc(G.t)+'</div>'+
+      '<div class="gmeta">'+done+' / '+ts.length+(G.s?' · '+esc(G.s):'')+'</div></div>'+
       '<div class="glist">'+(vis.length?vis.map(t=>{
         const s=st(t.id),P=PEOPLE[t.w]||PEOPLE.ALL;
         return '<div class="task '+(s==='done'?'done':'')+'">'+
-          '<button class="st st-'+s+'" onclick="cyc(\''+t.id+'\')">'+LBL[s]+'</button>'+
+          '<span class="st st-'+s+'" style="cursor:default">'+LBL[s]+'</span>'+
           '<div><div class="tt"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span>'+esc(t.t)+'</div>'+
           '<div class="tsub">'+esc(t.s)+'</div></div>'+
           '<div class="own"><span class="av '+P.c+'">'+(t.w==='ALL'?'★':t.w)+'</span>'+P.n.split(' ').slice(-1)[0]+'</div>'+
-          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+
-          '<button class="tedit" title="Modifier l\'action" onclick="editTask(\''+t.id+'\')">✎</button>'+
-          (t.del?'<button class="tdel" title="Supprimer l\'action" onclick="delTask(\''+t.id+'\')">×</button>':'')+'</div></div>';
-      }).join(''):'<div class="empty">Aucune action ici — cliquez sur ＋ pour en ajouter une.</div>')+'</div>';
+          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+'</div></div>';
+      }).join(''):'<div class="empty">Aucune action ne correspond aux filtres.</div>')+'</div>';
     g.appendChild(d);
   });
   stats();
@@ -759,10 +750,16 @@ async function logActivity(action,entityType,entityId,entityTitle,fromValue,toVa
 
 const REQUEST_LBL={pending:'À traiter',waiting:'En attente',accepted:'Acceptée',refused:'Refusée'};
 function renderPersonal(){
-  const el=document.getElementById('personal-list'),sum=document.getElementById('personal-summary');if(!el)return;
-  if(!workspaceAvailable){sum.textContent='';el.innerHTML='<div class="history-warning">Exécutez la dernière version de <b>supabase/schema.sql</b> pour activer cet espace.</div>';return}
-  const done=PERSONAL_TASKS.filter(t=>t.status==='done').length,wip=PERSONAL_TASKS.filter(t=>t.status==='wip').length;
-  sum.textContent=done+' terminée'+(done>1?'s':'')+' · '+wip+' en cours · '+PERSONAL_TASKS.length+' au total';
+  const el=document.getElementById('personal-list'),assignedEl=document.getElementById('assigned-list'),sum=document.getElementById('personal-summary');if(!el)return;
+  const assigned=T.filter(t=>t.w===CURRENT||t.w==='ALL');
+  document.getElementById('assigned-count').textContent=assigned.length;
+  assignedEl.innerHTML=assigned.length?assigned.map(t=>{
+    const status=st(t.id),collective=t.w==='ALL';
+    return '<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.t)+'</div><div class="personal-sub">'+esc(t.s||'')+'</div></div><button class="st st-'+status+'" style="width:auto" onclick="cyc(\''+t.id+'\')">'+LBL[status]+'</button></div><div class="personal-meta"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span><span>Échéance : '+fmt(t.d)+'</span>'+(collective?'<span>★ Action collective</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editTask(\''+t.id+'\')">Modifier</button>'+(t.del?'<button class="mini-btn no" onclick="delTask(\''+t.id+'\')">Supprimer</button>':'')+'</div></div>';
+  }).join(''):'<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">Aucune action du plan ne vous est attribuée.</div>';
+  if(!workspaceAvailable){sum.textContent=assigned.length+' action(s) du plan';document.getElementById('private-count').textContent='—';el.innerHTML='<div class="history-warning">Exécutez la migration Supabase pour activer les tâches personnelles.</div>';return}
+  document.getElementById('private-count').textContent=PERSONAL_TASKS.length;
+  sum.textContent=assigned.length+' action(s) du plan · '+PERSONAL_TASKS.length+' tâche(s) personnelle(s)';
   if(!PERSONAL_TASKS.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">Aucune tâche personnelle. Créez votre première tâche.</div>';return}
   el.innerHTML=PERSONAL_TASKS.map(t=>'<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.title)+'</div><div class="personal-sub">'+esc(t.subtitle||'')+'</div></div><button class="st st-'+t.status+'" style="width:auto" onclick="cyclePersonal(\''+t.id+'\')">'+LBL[t.status]+'</button></div><div class="personal-meta"><span class="prio p-'+t.priority+'">'+(t.priority==='crit'?'CRITIQUE':t.priority==='haut'?'HAUT':'NORMAL')+'</span><span>Échéance : '+fmt(t.due_date)+'</span>'+(t.source_request_id?'<span>Issue d’une demande</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editPersonalTask(\''+t.id+'\')">Modifier</button><button class="mini-btn no" onclick="deletePersonalTask(\''+t.id+'\')">Supprimer</button></div></div>').join('');
 }

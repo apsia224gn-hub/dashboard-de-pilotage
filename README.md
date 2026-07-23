@@ -67,25 +67,21 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
   sélectionner son profil. Chaque profil APSIA ne peut être associé qu'à un seul compte.
 - **Se connecter** : utiliser ensuite le même e-mail et le même mot de passe. Le profil du compte
   est utilisé comme auteur dans l'historique et comme responsable présélectionné.
-- **Naviguer** : le menu sépare le `Dashboard`, les liens vers les `Dossiers` Drive et
-  l'`Historique` partagé indiquant qui a fait quoi et à quelle heure.
-- **Mon espace** : chaque associé gère ses propres tâches, invisibles dans l'espace privé des autres.
+- **Dashboard** : vue collective strictement en lecture seule (indicateurs, charge et plan d'action).
+- **Mon espace** : chaque associé y retrouve les actions existantes du plan qui lui sont attribuées,
+  ainsi que les actions collectives. Les statuts et modifications se font depuis cet espace.
+- **Tâches personnelles** : ajout, modification et suppression de tâches privées, visibles uniquement
+  par leur propriétaire.
 - **Demandes** : proposer une tâche à un autre associé. Le destinataire reçoit une notification
   et peut accepter, refuser ou mettre la demande en attente. Une acceptation crée automatiquement
   la tâche dans son espace personnel.
-- **Changer un statut** : cliquer sur le badge d'une action → À faire → En cours → Fait → Bloqué.
-- **Ajouter une action** : bouton « ＋ Nouvelle action », ou le **＋** dans l'en-tête d'une catégorie
-  (pré-sélectionne cette catégorie) → remplir le formulaire → **Enregistrer**.
-- **Ajouter une catégorie** : bouton « ＋ Nouvelle catégorie » → titre, couleur, sous-titre.
-- **Modifier** : le crayon **✎** sur une action ou une catégorie ouvre le formulaire pré-rempli.
-  Toutes les actions sont modifiables, y compris celles du plan de base.
-- **Supprimer** : le **×** retire une action ou une catégorie **ajoutée** (les éléments du plan
-  de base ne sont pas supprimables depuis l'écran, seulement modifiables).
+- **Changer un statut** : dans `Mon espace`, cliquer sur le badge → À faire → En cours → Fait → Bloqué.
+- **Modifier une action du plan** : utiliser le bouton `Modifier` dans `Mes actions du plan`.
+- **Supprimer** : seules les tâches personnelles ou actions ajoutées peuvent être supprimées ;
+  les actions de base du plan restent modifiables mais ne sont pas supprimables.
 - Tout ajout / modification / suppression est **partagé en temps réel** avec les trois Parties.
 - **Indicateur d'en-tête** : *Synchronisé* / *Hors ligne* / *Erreur de sync*.
 - **Rapport hebdo** : bouton « Générer le rapport hebdo » → copier → coller dans le groupe WhatsApp APSIA.
-- **Réinitialiser les statuts** : remet tous les statuts à « À faire » **pour toute l'équipe**
-  (ne supprime pas les actions ajoutées).
 
 ## Sécurité
 
