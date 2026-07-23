@@ -69,7 +69,10 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
   est utilisé comme auteur dans l'historique et comme responsable présélectionné.
 - **Dashboard** : vue collective strictement en lecture seule (indicateurs, charge et plan d'action).
 - **Mon espace** : chaque associé y retrouve les actions existantes du plan qui lui sont attribuées,
-  ainsi que les actions collectives. Les statuts et modifications se font depuis cet espace.
+  ainsi que les actions collectives. Les statuts et modifications se font depuis cet espace. Les
+  filtres de priorité permettent d'isoler les tâches critiques, hautes ou normales.
+- **Tâche commune** : depuis `Mon espace`, ajouter une action partagée, préattribuée aux trois Parties.
+  Elle apparaît sur le Dashboard et dans l'espace de chaque associé, et sa création est historisée.
 - **Tâches personnelles** : ajout, modification et suppression de tâches privées, visibles uniquement
   par leur propriétaire.
 - **Demandes** : proposer une tâche à un autre associé. Le destinataire reçoit une notification
