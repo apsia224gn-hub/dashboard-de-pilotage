@@ -268,7 +268,7 @@ create policy "team create requests" on public.task_requests
   );
 
 do $$
-begin
+begina
   alter publication supabase_realtime add table public.task_requests;
 exception when duplicate_object then
   null;
