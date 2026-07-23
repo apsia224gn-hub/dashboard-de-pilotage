@@ -217,6 +217,7 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 .personal-title,.request-title{font-size:.93rem;font-weight:700;line-height:1.4}
 .personal-sub,.request-sub{font-size:.78rem;color:var(--tx2);margin-top:4px}
 .personal-meta,.request-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:11px;font-size:.74rem;color:var(--tx2)}
+.category-tag{display:inline-flex;align-items:center;background:rgba(59,130,246,.09);border:1px solid rgba(59,130,246,.2);color:#bfdbfe;border-radius:99px;padding:2px 8px}
 .personal-actions,.request-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
 .mini-btn{background:var(--surface);border:1px solid var(--bd);color:var(--tx2);border-radius:7px;padding:6px 10px;font:600 .75rem/1 inherit;cursor:pointer}
 .mini-btn:hover{color:var(--tx);background:var(--elev)}
@@ -526,6 +527,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
 <dialog id="dlgPersonal" aria-labelledby="personal-h">
   <h2 id="personal-h" style="margin:0 0 14px">Nouvelle tâche personnelle</h2>
   <input type="hidden" id="personal-id">
+  <div class="field"><label for="personal-category">Catégorie</label><select id="personal-category"></select></div>
   <div class="field"><label for="personal-title">Intitulé</label><input type="text" id="personal-title" placeholder="Ex. Préparer le point hebdomadaire"></div>
   <div class="field"><label for="personal-sub">Détail (optionnel)</label><textarea id="personal-sub" placeholder="Précisions utiles"></textarea></div>
   <div class="frow">
@@ -539,6 +541,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
 <dialog id="dlgRequest" aria-labelledby="request-title-dialog">
   <h2 id="request-title-dialog" style="margin:0 0 14px">Demander une tâche</h2>
   <div class="field"><label for="request-recipient">Destinataire</label><select id="request-recipient"></select></div>
+  <div class="field"><label for="request-category">Catégorie</label><select id="request-category"></select></div>
   <div class="field"><label for="request-title">Intitulé</label><input type="text" id="request-title" placeholder="Ex. Vérifier le contrat fournisseur"></div>
   <div class="field"><label for="request-sub">Motif ou détail (optionnel)</label><textarea id="request-sub" placeholder="Pourquoi cette tâche est nécessaire"></textarea></div>
   <div class="frow">
@@ -606,7 +609,17 @@ const BGROUPS=[
   {id:'DES',t:'Design et charte graphique',d:'#06b6d4',s:'Identité visuelle'},
   {id:'JUR',t:'Juridique et administratif',d:'#f59e0b',s:'RCCM, NIF, domaine, banque'},
   {id:'PAY',t:'Paiement — Intouch',d:'#22c55e',s:'NDA puis intégration'},
-  {id:'COM',t:'Commercial et marketing',d:'#3b82f6',s:'B2C puis B2B écoles'}
+  {id:'COM',t:'Commercial et marketing',d:'#3b82f6',s:'B2C puis B2B écoles'},
+  {id:'PIL',t:'Pilotage et gouvernance',d:'#64748b',s:'Décisions, réunions et suivi'},
+  {id:'FIN',t:'Finance et budget',d:'#10b981',s:'Budget, dépenses et trésorerie'},
+  {id:'OPS',t:'Opérations',d:'#0ea5e9',s:'Exécution et coordination terrain'},
+  {id:'PAR',t:'Partenariats',d:'#14b8a6',s:'Fournisseurs et partenaires externes'},
+  {id:'QUA',t:'Qualité et recette',d:'#a855f7',s:'Tests, validation et conformité'},
+  {id:'DOC',t:'Documentation',d:'#f97316',s:'Guides, procédures et livrables'},
+  {id:'SUP',t:'Support et utilisateurs',d:'#ec4899',s:'Assistance, retours et fidélisation'},
+  {id:'DAT',t:'Données et reporting',d:'#84cc16',s:'Indicateurs, analyses et rapports'},
+  {id:'RH',t:'Organisation et équipe',d:'#eab308',s:'Rôles, ressources et coordination'},
+  {id:'GEN',t:'Général',d:'#94a3b8',s:'Tâches transversales non classées'}
 ];
 const BT=[
  {id:'S1',g:'SEC',t:'Rotation des clés Groq et Kkiapay chez les fournisseurs',s:'Clés lisibles dans l\u2019historique du dépôt public — exploitables en quelques heures',w:'MK',d:'2026-07-21',p:'crit'},
@@ -675,6 +688,8 @@ let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégori
 let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
 let CURRENT='',SESSION=null,dataStarted=false,activitySubscribed=false;
 let F={who:'all',st:'all',prio:'all',personalPrio:'all',personalSt:'all',q:''};
+const PERSONAL_FIELDS='id,user_id,source_request_id,category_id,title,subtitle,due_date,priority,status,created_at,updated_at';
+const REQUEST_FIELDS='id,requester_user_id,requester_actor,recipient_actor,category_id,title,subtitle,due_date,priority,status,created_at,responded_at';
 const CY=['todo','wip','done','block'];
 const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
 
@@ -717,8 +732,8 @@ async function load(){
     sb.from('categories').select('*').order('position'),
     sb.from('tasks').select('*').order('position'),
     sb.from('activity_log').select('*').order('created_at',{ascending:false}).limit(200),
-    sb.from('personal_tasks').select('*').order('created_at',{ascending:false}),
-    sb.from('task_requests').select('*').order('created_at',{ascending:false})
+    sb.from('personal_tasks').select(PERSONAL_FIELDS).order('created_at',{ascending:false}),
+    sb.from('task_requests').select(REQUEST_FIELDS).order('created_at',{ascending:false})
   ]);
   if(!rs.error){S={};rs.data.forEach(r=>{S[r.task_id]=r.status})}
   if(!rc.error)customCats=rc.data;
@@ -735,8 +750,8 @@ async function load(){
 }
 async function refetchCats(){const{data,error}=await sb.from('categories').select('*').order('position');if(!error){customCats=data;rebuild();cache();renderSoon()}}
 async function refetchTasks(){const{data,error}=await sb.from('tasks').select('*').order('position');if(!error){customTasks=data;rebuild();cache();renderSoon()}}
-async function refetchPersonal(){const{data,error}=await sb.from('personal_tasks').select('*').order('created_at',{ascending:false});if(!error){PERSONAL_TASKS=data||[];renderSoon()}}
-async function refetchRequests(){const{data,error}=await sb.from('task_requests').select('*').order('created_at',{ascending:false});if(!error){TASK_REQUESTS=data||[];renderSoon()}}
+async function refetchPersonal(){const{data,error}=await sb.from('personal_tasks').select(PERSONAL_FIELDS).order('created_at',{ascending:false});if(!error){PERSONAL_TASKS=data||[];renderSoon()}}
+async function refetchRequests(){const{data,error}=await sb.from('task_requests').select(REQUEST_FIELDS).order('created_at',{ascending:false});if(!error){TASK_REQUESTS=data||[];renderSoon()}}
 
 let _rt;
 function renderSoon(){clearTimeout(_rt);_rt=setTimeout(render,80)}
@@ -789,6 +804,11 @@ function taskSort(a,b){
 }
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function categoryName(id){const category=GROUPS.find(group=>group.id===(id||'GEN'));return category?category.t:'Général'}
+function fillCategorySelect(id,selected){
+  const select=document.getElementById(id);select.innerHTML=GROUPS.map(group=>'<option value="'+esc(group.id)+'">'+esc(group.t)+'</option>').join('');
+  select.value=GROUPS.some(group=>group.id===selected)?selected:'GEN';
+}
 function notify(message,type){
   const region=document.getElementById('toast-region'),toast=document.createElement('div');
   toast.className='toast '+(type||'');toast.textContent=message;region.appendChild(toast);
@@ -899,24 +919,24 @@ function renderPersonal(){
   assignedEl.innerHTML=assigned.length?assigned.map(t=>{
     const status=st(t.id),collective=t.w==='ALL';
     const group=GROUPS.find(g=>g.id===t.g);
-    return '<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.t)+'</div><div class="personal-sub">'+esc(t.s||'')+'</div></div><select class="st st-'+status+'" style="width:auto" aria-label="Statut de '+esc(t.t)+'" onchange="setPlanStatus(\''+t.id+'\',this.value)">'+statusOptions(status)+'</select></div><div class="personal-meta"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span><span>'+(group?esc(group.t):'Plan d’action')+'</span><span class="due '+dueCls(t.d,status)+'">Échéance : '+fmt(t.d)+(dueHint(t.d,status)?' · '+dueHint(t.d,status):'')+'</span>'+(collective?'<span>★ Action collective</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editTask(\''+t.id+'\')">Modifier</button>'+(t.del?'<button class="mini-btn no" onclick="delTask(\''+t.id+'\')">Supprimer</button>':'')+'</div></div>';
+    return '<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.t)+'</div><div class="personal-sub">'+esc(t.s||'')+'</div></div><select class="st st-'+status+'" style="width:auto" aria-label="Statut de '+esc(t.t)+'" onchange="setPlanStatus(\''+t.id+'\',this.value)">'+statusOptions(status)+'</select></div><div class="personal-meta"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span><span class="category-tag">'+(group?esc(group.t):'Plan d’action')+'</span><span class="due '+dueCls(t.d,status)+'">Échéance : '+fmt(t.d)+(dueHint(t.d,status)?' · '+dueHint(t.d,status):'')+'</span>'+(collective?'<span>★ Action collective</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editTask(\''+t.id+'\')">Modifier</button>'+(t.del?'<button class="mini-btn no" onclick="delTask(\''+t.id+'\')">Supprimer</button>':'')+'</div></div>';
   }).join(''):'<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">'+(personalFiltered?'Aucune action du plan ne correspond à ces filtres.':'Aucune action du plan ne vous est attribuée.')+'</div>';
-  if(!workspaceAvailable){sum.textContent=allAssigned.length+' action(s) du plan';document.getElementById('private-count').textContent='—';el.innerHTML='<div class="history-warning">Exécutez la migration Supabase pour activer les tâches personnelles.</div>';return}
+  if(!workspaceAvailable){sum.textContent=allAssigned.length+' action(s) du plan';document.getElementById('private-count').textContent='—';el.innerHTML='<div class="history-warning">Exécutez <b>supabase/category_migration.sql</b> dans Supabase pour activer les catégories des tâches personnelles.</div>';return}
   document.getElementById('private-count').textContent=personalFiltered?personal.length+' / '+PERSONAL_TASKS.length:PERSONAL_TASKS.length;
   sum.textContent=allAssigned.length+' action(s) du plan · '+PERSONAL_TASKS.length+' tâche(s) personnelle(s) · Choisissez directement le statut souhaité.';
   if(!personal.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">'+(personalFiltered?'Aucune tâche personnelle ne correspond à ces filtres.':'Aucune tâche personnelle. Créez votre première tâche.')+'</div>';return}
-  el.innerHTML=personal.map(t=>'<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.title)+'</div><div class="personal-sub">'+esc(t.subtitle||'')+'</div></div><select class="st st-'+t.status+'" style="width:auto" aria-label="Statut de '+esc(t.title)+'" onchange="setPersonalStatus(\''+t.id+'\',this.value)">'+statusOptions(t.status)+'</select></div><div class="personal-meta"><span class="prio p-'+t.priority+'">'+(t.priority==='crit'?'CRITIQUE':t.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="due '+dueCls(t.due_date,t.status)+'">Échéance : '+fmt(t.due_date)+(dueHint(t.due_date,t.status)?' · '+dueHint(t.due_date,t.status):'')+'</span>'+(t.source_request_id?'<span>Issue d’une demande</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editPersonalTask(\''+t.id+'\')">Modifier</button><button class="mini-btn no" onclick="deletePersonalTask(\''+t.id+'\')">Supprimer</button></div></div>').join('');
+  el.innerHTML=personal.map(t=>'<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.title)+'</div><div class="personal-sub">'+esc(t.subtitle||'')+'</div></div><select class="st st-'+t.status+'" style="width:auto" aria-label="Statut de '+esc(t.title)+'" onchange="setPersonalStatus(\''+t.id+'\',this.value)">'+statusOptions(t.status)+'</select></div><div class="personal-meta"><span class="prio p-'+t.priority+'">'+(t.priority==='crit'?'CRITIQUE':t.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="category-tag">'+esc(categoryName(t.category_id))+'</span><span class="due '+dueCls(t.due_date,t.status)+'">Échéance : '+fmt(t.due_date)+(dueHint(t.due_date,t.status)?' · '+dueHint(t.due_date,t.status):'')+'</span>'+(t.source_request_id?'<span>Issue d’une demande</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editPersonalTask(\''+t.id+'\')">Modifier</button><button class="mini-btn no" onclick="deletePersonalTask(\''+t.id+'\')">Supprimer</button></div></div>').join('');
 }
 function requestCard(r,received){
   const actor=PEOPLE[received?r.requester_actor:r.recipient_actor]||PEOPLE.ALL,status=REQUEST_LBL[r.status]||r.status;
   const requestStatus=['pending','waiting'].includes(r.status)?'todo':'done',hint=dueHint(r.due_date,requestStatus);
   const actions=received&&['pending','waiting'].includes(r.status)?'<div class="request-actions"><button class="mini-btn ok" onclick="respondRequest(\''+r.id+'\',\'accepted\')">Accepter</button><button class="mini-btn no" onclick="respondRequest(\''+r.id+'\',\'refused\')">Refuser</button>'+(r.status==='pending'?'<button class="mini-btn wait" onclick="respondRequest(\''+r.id+'\',\'waiting\')">Mettre en attente</button>':'')+'</div>':'';
-  return '<div class="request-card"><div class="request-top"><div><div class="request-title">'+esc(r.title)+'</div><div class="request-sub">'+esc(r.subtitle||'')+'</div></div><span class="req-status req-'+r.status+'">'+esc(status)+'</span></div><div class="request-meta"><span class="prio p-'+r.priority+'">'+(r.priority==='crit'?'CRITIQUE':r.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="av '+actor.c+'">'+(received?r.requester_actor:r.recipient_actor)+'</span><span>'+(received?'Demandée par ':'Envoyée à ')+esc(actor.n)+'</span><span class="due '+dueCls(r.due_date,requestStatus)+'">Échéance : '+fmt(r.due_date)+(hint?' · '+hint:'')+'</span></div>'+actions+'</div>';
+  return '<div class="request-card"><div class="request-top"><div><div class="request-title">'+esc(r.title)+'</div><div class="request-sub">'+esc(r.subtitle||'')+'</div></div><span class="req-status req-'+r.status+'">'+esc(status)+'</span></div><div class="request-meta"><span class="prio p-'+r.priority+'">'+(r.priority==='crit'?'CRITIQUE':r.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="category-tag">'+esc(categoryName(r.category_id))+'</span><span class="av '+actor.c+'">'+(received?r.requester_actor:r.recipient_actor)+'</span><span>'+(received?'Demandée par ':'Envoyée à ')+esc(actor.n)+'</span><span class="due '+dueCls(r.due_date,requestStatus)+'">Échéance : '+fmt(r.due_date)+(hint?' · '+hint:'')+'</span></div>'+actions+'</div>';
 }
 function renderRequests(){
   const receivedEl=document.getElementById('received-requests'),sentEl=document.getElementById('sent-requests');if(!receivedEl)return;
   const badge=document.getElementById('request-badge');
-  if(!workspaceAvailable){receivedEl.innerHTML='<div class="history-warning">Migration Supabase requise.</div>';sentEl.innerHTML='';badge.classList.remove('show');return}
+  if(!workspaceAvailable){receivedEl.innerHTML='<div class="history-warning">Exécutez <b>supabase/category_migration.sql</b> dans Supabase pour activer les catégories des demandes.</div>';sentEl.innerHTML='';badge.classList.remove('show');return}
   const order={pending:0,waiting:1,accepted:2,refused:3};
   const requestSort=(a,b)=>(order[a.status]??4)-(order[b.status]??4)||priorityRank(a.priority)-priorityRank(b.priority)||String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'));
   const received=TASK_REQUESTS.filter(r=>r.recipient_actor===CURRENT).sort(requestSort),sent=TASK_REQUESTS.filter(r=>r.requester_actor===CURRENT).sort(requestSort),pending=received.filter(r=>r.status==='pending').length;
@@ -928,16 +948,16 @@ function renderRequests(){
 
 function openPersonalTask(){
   document.getElementById('personal-h').textContent='Nouvelle tâche personnelle';document.getElementById('personal-id').value='';
-  document.getElementById('personal-title').value='';document.getElementById('personal-sub').value='';document.getElementById('personal-priority').value='norm';document.getElementById('personal-status').value='todo';document.getElementById('personal-due').value='';document.getElementById('dlgPersonal').showModal();
+  fillCategorySelect('personal-category','GEN');document.getElementById('personal-title').value='';document.getElementById('personal-sub').value='';document.getElementById('personal-priority').value='norm';document.getElementById('personal-status').value='todo';document.getElementById('personal-due').value='';document.getElementById('dlgPersonal').showModal();
 }
 function editPersonalTask(id){
   const t=PERSONAL_TASKS.find(x=>x.id===id);if(!t)return;
   document.getElementById('personal-h').textContent='Modifier la tâche personnelle';document.getElementById('personal-id').value=id;
-  document.getElementById('personal-title').value=t.title;document.getElementById('personal-sub').value=t.subtitle||'';document.getElementById('personal-priority').value=t.priority;document.getElementById('personal-status').value=t.status;document.getElementById('personal-due').value=t.due_date||'';document.getElementById('dlgPersonal').showModal();
+  fillCategorySelect('personal-category',t.category_id||'GEN');document.getElementById('personal-title').value=t.title;document.getElementById('personal-sub').value=t.subtitle||'';document.getElementById('personal-priority').value=t.priority;document.getElementById('personal-status').value=t.status;document.getElementById('personal-due').value=t.due_date||'';document.getElementById('dlgPersonal').showModal();
 }
 async function savePersonalTask(){
   const id=document.getElementById('personal-id').value,title=document.getElementById('personal-title').value.trim();if(!title){notify('Indiquez un intitulé.','err');return}
-  const values={user_id:SESSION.user.id,title,subtitle:document.getElementById('personal-sub').value.trim(),priority:document.getElementById('personal-priority').value,status:document.getElementById('personal-status').value,due_date:document.getElementById('personal-due').value||null,updated_at:new Date().toISOString()};
+  const values={user_id:SESSION.user.id,category_id:document.getElementById('personal-category').value,title,subtitle:document.getElementById('personal-sub').value.trim(),priority:document.getElementById('personal-priority').value,status:document.getElementById('personal-status').value,due_date:document.getElementById('personal-due').value||null,updated_at:new Date().toISOString()};
   const query=id?sb.from('personal_tasks').update(values).eq('id',id):sb.from('personal_tasks').insert(values);
   dialogBusy('dlgPersonal',true);const {data,error}=await query.select().single();dialogBusy('dlgPersonal',false);if(error){notify('Enregistrement impossible. Vérifiez votre connexion.','err');console.error(error);return}
   document.getElementById('dlgPersonal').close();
@@ -957,11 +977,11 @@ async function deletePersonalTask(id){
 }
 function openRequest(){
   const recipients=['MD','MK','MH'].filter(k=>k!==CURRENT);document.getElementById('request-recipient').innerHTML=recipients.map(k=>'<option value="'+k+'">'+esc(PEOPLE[k].n)+'</option>').join('');
-  document.getElementById('request-title').value='';document.getElementById('request-sub').value='';document.getElementById('request-priority').value='norm';document.getElementById('request-due').value='';document.getElementById('dlgRequest').showModal();
+  fillCategorySelect('request-category','GEN');document.getElementById('request-title').value='';document.getElementById('request-sub').value='';document.getElementById('request-priority').value='norm';document.getElementById('request-due').value='';document.getElementById('dlgRequest').showModal();
 }
 async function sendTaskRequest(){
   const title=document.getElementById('request-title').value.trim(),recipient=document.getElementById('request-recipient').value;if(!title||!recipient){notify('Indiquez un destinataire et un intitulé.','err');return}
-  const request={requester_user_id:SESSION.user.id,requester_actor:CURRENT,recipient_actor:recipient,title,subtitle:document.getElementById('request-sub').value.trim(),priority:document.getElementById('request-priority').value,due_date:document.getElementById('request-due').value||null};
+  const request={requester_user_id:SESSION.user.id,requester_actor:CURRENT,recipient_actor:recipient,category_id:document.getElementById('request-category').value,title,subtitle:document.getElementById('request-sub').value.trim(),priority:document.getElementById('request-priority').value,due_date:document.getElementById('request-due').value||null};
   dialogBusy('dlgRequest',true);const {data,error}=await sb.from('task_requests').insert(request).select().single();dialogBusy('dlgRequest',false);if(error){notify('Envoi impossible. Vérifiez votre connexion.','err');console.error(error);return}
   document.getElementById('dlgRequest').close();TASK_REQUESTS.unshift(data);renderRequests();notify('Demande envoyée à '+PEOPLE[recipient].n+'.','ok');await logActivity('request_created','task_request',data.id,title,null,recipient);
 }

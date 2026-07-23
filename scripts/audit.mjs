@@ -40,6 +40,8 @@ for(const table of ['profiles','task_status','categories','tasks','activity_log'
   check(schema.includes(`public.${table}`),`Table absente du schéma : ${table}`);
 }
 check(schema.includes('public.respond_task_request'),'Fonction respond_task_request absente du schéma');
+check((schema.match(/category_id\s+text/g)||[]).length>=3,'Catégories absentes des actions, demandes ou tâches personnelles');
+check(/req\.category_id/.test(schema),'La catégorie des demandes acceptées n’est pas transmise à la tâche personnelle');
 
 if(failures.length){
   console.error(`Audit en échec (${failures.length})`);

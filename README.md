@@ -39,6 +39,12 @@ d'accès (RLS) et le temps réel. Il est **idempotent** : si vous aviez déjà e
 version précédente, ré-exécutez-le simplement pour ajouter les tables manquantes — rien
 n'est perdu. **Exécutez ce schéma avant de créer le premier compte.**
 
+Pour une installation déjà en service qui possède les espaces personnels, exécuter uniquement
+[`supabase/category_migration.sql`](supabase/category_migration.sql) afin d'ajouter les catégories
+sans rejouer tout le schéma. Les tâches existantes sont conservées et reclassées automatiquement
+quand leur intitulé ou leur description permet de reconnaître le contexte. Les cas ambigus restent
+dans **Général** et peuvent être reclassés depuis le bouton `Modifier`.
+
 Dans Supabase → **Authentication → Providers → Email**, laisser le fournisseur Email activé,
 mais désactiver **Confirm email** afin que le compte soit utilisable immédiatement après sa
 création. Les trois comptes restent protégés par leur mot de passe et les politiques RLS.
@@ -74,10 +80,13 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 - **Tâche commune** : depuis `Mon espace`, ajouter une action partagée, préattribuée aux trois Parties.
   Elle apparaît sur le Dashboard et dans l'espace de chaque associé, et sa création est historisée.
 - **Tâches personnelles** : ajout, modification et suppression de tâches privées, visibles uniquement
-  par leur propriétaire.
+  par leur propriétaire. Chaque tâche possède une catégorie modifiable.
 - **Demandes** : proposer une tâche à un autre associé. Le destinataire reçoit une notification
   et peut accepter, refuser ou mettre la demande en attente. Une acceptation crée automatiquement
-  la tâche dans son espace personnel.
+  la tâche dans son espace personnel en conservant sa catégorie.
+- **Catégories disponibles** : sécurité, produit et technique, design, juridique, paiement,
+  commercial et marketing, pilotage, finance, opérations, partenariats, qualité, documentation,
+  support, données, organisation et général.
 - **Changer un statut** : dans `Mon espace`, ouvrir le menu de statut d'une tâche puis choisir directement
   À faire, En cours, Fait ou Bloqué.
 - **Modifier une action du plan** : utiliser le bouton `Modifier` dans `Mes actions du plan`.

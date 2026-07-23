@@ -6,6 +6,7 @@ create table if not exists public.task_requests (
   requester_user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   requester_actor text not null check (requester_actor in ('MD','MK','MH')),
   recipient_actor text not null check (recipient_actor in ('MD','MK','MH')),
+  category_id text not null default 'GEN',
   title text not null,
   subtitle text default '',
   due_date date,
@@ -15,6 +16,9 @@ create table if not exists public.task_requests (
   responded_at timestamptz,
   check (requester_actor <> recipient_actor)
 );
+
+alter table public.task_requests
+  add column if not exists category_id text not null default 'GEN';
 
 create index if not exists task_requests_recipient_idx
   on public.task_requests (recipient_actor,status,created_at desc);
@@ -46,6 +50,7 @@ create table if not exists public.personal_tasks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   source_request_id uuid unique references public.task_requests(id) on delete set null,
+  category_id text not null default 'GEN',
   title text not null,
   subtitle text default '',
   due_date date,
@@ -54,6 +59,9 @@ create table if not exists public.personal_tasks (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.personal_tasks
+  add column if not exists category_id text not null default 'GEN';
 
 create index if not exists personal_tasks_user_idx
   on public.personal_tasks (user_id,created_at desc);
@@ -104,9 +112,9 @@ begin
 
   if p_response = 'accepted' then
     insert into public.personal_tasks
-      (user_id,source_request_id,title,subtitle,due_date,priority,status)
+      (user_id,source_request_id,category_id,title,subtitle,due_date,priority,status)
     values
-      (auth.uid(),req.id,req.title,req.subtitle,req.due_date,req.priority,'todo')
+      (auth.uid(),req.id,req.category_id,req.title,req.subtitle,req.due_date,req.priority,'todo')
     returning id into new_task_id;
   end if;
 
