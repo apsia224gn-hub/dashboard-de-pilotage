@@ -16,6 +16,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{
+  color-scheme:dark;
   --bg:#07101a; --bg2:#0a1628; --card:#0f2035; --surface:#162840; --elev:#1a3050;
   --accent:#3b82f6; --accent-d:#2563eb; --violet:#8b5cf6;
   --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --info:#06b6d4;
@@ -23,7 +24,13 @@
   --bd:#1e3a5f; --bd2:#132030;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--tx);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(circle at 12% -10%,rgba(59,130,246,.14),transparent 30rem),radial-gradient(circle at 95% 4%,rgba(139,92,246,.09),transparent 25rem),var(--bg);color:var(--tx);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px;min-height:100vh}
+button,input,select,textarea{font:inherit}
+button:disabled{opacity:.55;cursor:not-allowed}
+:focus-visible{outline:3px solid rgba(96,165,250,.7);outline-offset:2px}
+.skip-link{position:fixed;left:12px;top:-60px;z-index:1000;background:#fff;color:#07101a;padding:9px 14px;border-radius:8px;font-weight:700;text-decoration:none;transition:top .15s}
+.skip-link:focus{top:12px}
 .auth-locked .view,.auth-locked footer{visibility:hidden}
 .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
 
@@ -46,7 +53,8 @@ header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px
 .user-pill{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--bd);color:var(--tx);border-radius:99px;padding:6px 11px 6px 7px;font:600 .78rem/1.2 inherit;cursor:pointer;transition:.15s}
 .user-pill:hover{background:var(--elev);border-color:var(--accent)}
 .user-pill .av{width:28px;height:28px}
-.main-nav{display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd2)}
+.main-nav{display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd2);scrollbar-width:none}
+.main-nav::-webkit-scrollbar,.filter-group::-webkit-scrollbar{display:none}
 .nav-btn{display:flex;align-items:center;gap:7px;background:transparent;border:0;color:var(--tx2);border-radius:8px;padding:8px 13px;font:600 .84rem/1 inherit;cursor:pointer;transition:.15s}
 .nav-btn:hover{background:var(--surface);color:var(--tx)}
 .nav-btn.on{background:rgba(59,130,246,.16);color:#bfdbfe}
@@ -54,12 +62,14 @@ header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px
 .nav-badge.show{display:inline-flex}
 .view{display:none}
 .view.on{display:block}
-.page-head{margin:26px 0 18px}
-.page-head h1{font-size:1.45rem;line-height:1.25}
-.page-head p{color:var(--tx2);font-size:.86rem;margin-top:4px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:28px 0 20px}
+.page-head h1{font-size:clamp(1.35rem,3vw,1.75rem);line-height:1.2;letter-spacing:-.02em}
+.page-head p{color:var(--tx2);font-size:.86rem;margin-top:5px;max-width:720px}
+.read-only{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.3);color:#67e8f9;border-radius:99px;padding:5px 10px;font-size:.72rem;font-weight:700}
 
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:24px 0}
-.kpi{background:var(--card);border:1px solid var(--bd2);border-radius:12px;padding:14px 16px}
+.kpi{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(22,40,64,.96),rgba(15,32,53,.96));border:1px solid var(--bd);border-radius:14px;padding:16px 18px;box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.kpi::after{content:"";position:absolute;inset:auto -20px -26px auto;width:76px;height:76px;border-radius:50%;background:rgba(59,130,246,.08)}
 .kpi .n{font-size:1.7rem;font-weight:800;line-height:1.1}
 .kpi .l{font-size:.75rem;color:var(--tx2);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 
@@ -69,7 +79,14 @@ header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px
 h2{font-size:1.15rem;font-weight:700;margin:28px 0 12px;display:flex;align-items:center;gap:10px}
 h2 .tag{font-size:.7rem;font-weight:600;background:var(--surface);border:1px solid var(--bd);color:var(--tx2);padding:2px 9px;border-radius:99px;letter-spacing:.06em}
 
-.filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0;align-items:center}
+.filter-panel{background:rgba(15,32,53,.75);border:1px solid var(--bd2);border-radius:13px;padding:12px 14px;margin:16px 0 20px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0;align-items:center}
+.filter-group{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.filter-label{font-size:.72rem;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;margin-right:2px}
+.filter-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px;padding-top:11px;border-top:1px solid var(--bd2)}
+.result-count{font-size:.78rem;color:var(--tx2)}
+.clear-filters{background:transparent;border:0;color:#93c5fd;font-size:.78rem;font-weight:600;cursor:pointer;padding:3px 0}
+.clear-filters:hover{text-decoration:underline}
 .fbtn{background:var(--surface);border:1px solid var(--bd);color:var(--tx2);border-radius:99px;padding:6px 14px;font-size:.83rem;font-weight:500;cursor:pointer;font-family:inherit;transition:.15s}
 .fbtn:hover{background:var(--elev);color:var(--tx)}
 .fbtn.on{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -84,25 +101,26 @@ input.search::placeholder{color:var(--tx3)}
 .dcard .dd{font-size:.78rem;color:var(--tx2);line-height:1.45}
 .dmain{background:linear-gradient(92deg,rgba(59,130,246,.14),rgba(139,92,246,.10));border:1px solid rgba(59,130,246,.35)}
 
-.grp{margin-bottom:26px}
-.ghd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;background:var(--card);border:1px solid var(--bd2);border-radius:10px 10px 0 0;cursor:pointer}
+.grp{margin-bottom:20px;box-shadow:0 10px 25px rgba(0,0,0,.08);border-radius:12px}
+.ghd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:var(--card);border:1px solid var(--bd);border-radius:12px 12px 0 0}
 .ghd:hover{background:var(--surface)}
 .gtitle{font-weight:700;font-size:.98rem;display:flex;align-items:center;gap:9px}
 .gdot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .gmeta{font-size:.78rem;color:var(--tx2);white-space:nowrap}
-.glist{border:1px solid var(--bd2);border-top:0;border-radius:0 0 10px 10px;overflow:hidden}
+.glist{border:1px solid var(--bd);border-top:0;border-radius:0 0 12px 12px;overflow:hidden}
 
-.task{display:grid;grid-template-columns:118px 1fr 132px 96px;gap:12px;align-items:center;padding:11px 15px;border-bottom:1px solid var(--bd2);background:var(--bg2);transition:.15s}
+.task{display:grid;grid-template-columns:118px 1fr 132px 112px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bd2);background:rgba(10,22,40,.86);transition:.15s}
 .task:last-child{border-bottom:0}
 .task:hover{background:var(--card)}
 .task.done .tt{text-decoration:line-through;color:var(--tx3)}
 .task.hide{display:none}
 
-.st{border:1px solid;border-radius:99px;padding:4px 10px;font-size:.74rem;font-weight:600;cursor:pointer;font-family:inherit;width:100%;text-align:center;letter-spacing:.02em;transition:.15s}
+.st{border:1px solid;border-radius:99px;padding:5px 10px;font-size:.74rem;font-weight:700;cursor:pointer;font-family:inherit;width:100%;text-align:center;letter-spacing:.02em;transition:.15s;white-space:nowrap}
 .st-todo{background:rgba(71,85,105,.18);border-color:var(--tx3);color:var(--tx2)}
 .st-wip{background:rgba(59,130,246,.16);border-color:var(--accent);color:#93c5fd}
 .st-done{background:rgba(34,197,94,.16);border-color:var(--ok);color:#86efac}
 .st-block{background:rgba(239,68,68,.16);border-color:var(--err);color:#fca5a5}
+.st option{background:var(--bg2);color:var(--tx)}
 
 .tt{font-size:.9rem;font-weight:500;line-height:1.45}
 .tsub{font-size:.76rem;color:var(--tx2);margin-top:2px}
@@ -118,7 +136,8 @@ input.search::placeholder{color:var(--tx3)}
 .av-mh{background:rgba(34,197,94,.22);color:#86efac}
 .av-all{background:rgba(245,158,11,.22);color:#fcd34d}
 
-.due{font-size:.78rem;color:var(--tx2);text-align:right;white-space:nowrap}
+.due{font-size:.76rem;color:var(--tx2);text-align:right;white-space:nowrap}
+.due small{display:block;color:inherit;font-size:.66rem;line-height:1.2}
 .due.late{color:#fca5a5;font-weight:600}
 .due.soon{color:#fcd34d;font-weight:600}
 
@@ -186,10 +205,14 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 .account-card{display:flex;align-items:center;gap:13px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px;margin:14px 0}
 .account-card .av{width:38px;height:38px}
 .auth-brand{display:block;width:68px;height:68px;border-radius:16px;margin:0 0 14px;box-shadow:0 12px 30px rgba(0,0,0,.2)}
-.panel-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px}
+.panel-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 18px;background:linear-gradient(115deg,rgba(59,130,246,.1),rgba(139,92,246,.06));border:1px solid rgba(59,130,246,.22);border-radius:13px;padding:14px}
 .panel-summary{font-size:.8rem;color:var(--tx2)}
+.workspace-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 20px}
+.workspace-stat{background:var(--card);border:1px solid var(--bd2);border-radius:11px;padding:11px 13px}
+.workspace-stat b{display:block;font-size:1.15rem;line-height:1.2}.workspace-stat span{font-size:.72rem;color:var(--tx2)}
 .personal-list,.request-list{display:grid;gap:10px;margin-bottom:28px}
-.personal-card,.request-card{background:var(--card);border:1px solid var(--bd2);border-radius:11px;padding:14px 16px}
+.personal-card,.request-card{background:linear-gradient(145deg,rgba(15,32,53,.98),rgba(10,22,40,.98));border:1px solid var(--bd2);border-radius:12px;padding:15px 16px;box-shadow:0 8px 22px rgba(0,0,0,.08);transition:border-color .15s,transform .15s}
+.personal-card:hover,.request-card:hover{border-color:var(--bd);transform:translateY(-1px)}
 .personal-top,.request-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .personal-title,.request-title{font-size:.93rem;font-weight:700;line-height:1.4}
 .personal-sub,.request-sub{font-size:.78rem;color:var(--tx2);margin-top:4px}
@@ -202,6 +225,10 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 .request-columns h2{margin-top:0}
 .req-status{display:inline-block;border-radius:99px;padding:3px 9px;font-size:.68rem;font-weight:700}
 .req-pending{background:rgba(59,130,246,.16);color:#93c5fd}.req-waiting{background:rgba(245,158,11,.16);color:#fcd34d}.req-accepted{background:rgba(34,197,94,.16);color:#86efac}.req-refused{background:rgba(239,68,68,.16);color:#fca5a5}
+.toast-region{position:fixed;right:18px;bottom:18px;z-index:1000;display:grid;gap:8px;width:min(360px,calc(100vw - 28px));pointer-events:none}
+.toast{background:var(--surface);border:1px solid var(--bd);border-left:4px solid var(--accent);border-radius:10px;padding:11px 13px;box-shadow:0 14px 35px rgba(0,0,0,.32);font-size:.82rem;animation:toast-in .2s ease-out}
+.toast.ok{border-left-color:var(--ok)}.toast.err{border-left-color:var(--err)}
+@keyframes toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;border-top:1px solid var(--bd2);margin-top:34px}
 
@@ -215,6 +242,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   .task>.due{grid-area:due;justify-self:end;text-align:right;white-space:nowrap}
   .history-row{grid-template-columns:auto 1fr}.history-time{grid-column:2;text-align:left}
   .request-columns{grid-template-columns:1fr}
+  .page-head{align-items:flex-start}
 }
 /* Téléphone */
 @media(max-width:560px){
@@ -233,9 +261,19 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   .ghd{flex-wrap:wrap;gap:6px}
   .gmeta{white-space:normal}
   .frow{grid-template-columns:1fr;gap:0}     /* champs de formulaire empilés */
+  .page-head{margin:22px 0 16px;flex-direction:column;gap:10px}
+  .filter-panel{margin:12px 0 18px;padding:11px}
+  .filter-group{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:3px;scrollbar-width:none}
+  .filter-group .fbtn,.filter-label{flex:0 0 auto}
+  .filter-panel .fsep{display:none}
+  .filter-meta{align-items:flex-start}
+  .panel-toolbar{align-items:stretch}.panel-toolbar .actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.panel-toolbar .actions .btn:first-child{grid-column:1/-1}
+  .workspace-stats{grid-template-columns:1fr 1fr}.workspace-stat:last-child{grid-column:1/-1}
+  .personal-top,.request-top{flex-direction:column}.personal-top .st{width:auto}
   input.search{min-width:0;max-width:none;width:100%}
   dialog{padding:18px}
   textarea{min-height:220px}
+  .toast-region{right:14px;bottom:14px}
 }
 /* Petit téléphone */
 @media(max-width:400px){
@@ -249,9 +287,13 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   .task,.kpi,.pcard,.ghd{background:#fff!important;border-color:#ccc!important;color:#000!important}
   .tt,.gtitle,.kpi .n{color:#000!important}
 }
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body class="auth-locked">
+<a class="skip-link" href="#main-content">Aller au contenu</a>
 
 <header>
   <div class="wrap hdr">
@@ -281,9 +323,14 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </nav>
 </header>
 
-<div class="wrap">
+<main class="wrap" id="main-content">
 
   <section class="view on" id="view-dashboard">
+
+  <div class="page-head">
+    <div><h1>Vue d’ensemble</h1><p>Suivez l’avancement, les responsabilités et les échéances du plan d’action APSIA.</p></div>
+    <span class="read-only">◉ Lecture seule</span>
+  </div>
 
   <div class="kpis">
     <div class="kpi"><div class="n" id="k-total">0</div><div class="l">Actions au total</div></div>
@@ -301,23 +348,38 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
 
   <h2>Plan d'action <span class="tag">21 juillet → 5 octobre 2026</span></h2>
 
-  <div class="filters">
-    <button class="fbtn on" data-f="who" data-v="all">Tous</button>
-    <button class="fbtn" data-f="who" data-v="MD">M. Diawara</button>
-    <button class="fbtn" data-f="who" data-v="MK">M. C. Kanté</button>
-    <button class="fbtn" data-f="who" data-v="MH">M. Hady</button>
-    <span class="fsep"></span>
-    <button class="fbtn on" data-f="st" data-v="all">Tous statuts</button>
-    <button class="fbtn" data-f="st" data-v="todo">À faire</button>
-    <button class="fbtn" data-f="st" data-v="wip">En cours</button>
-    <button class="fbtn" data-f="st" data-v="block">Bloquées</button>
-    <span class="fsep"></span>
-    <button class="fbtn on" data-f="prio" data-v="all">Toutes priorités</button>
-    <button class="fbtn" data-f="prio" data-v="crit">Critique</button>
-    <button class="fbtn" data-f="prio" data-v="haut">Haute</button>
-    <button class="fbtn" data-f="prio" data-v="norm">Normale</button>
-    <span class="fsep"></span>
-    <input class="search" id="q" placeholder="Rechercher une action…">
+  <div class="filter-panel">
+    <div class="filters">
+      <div class="filter-group" aria-label="Responsable">
+        <span class="filter-label">Responsable</span>
+        <button class="fbtn on" data-f="who" data-v="all">Tous</button>
+        <button class="fbtn" data-f="who" data-v="MD">M. Diawara</button>
+        <button class="fbtn" data-f="who" data-v="MK">M. C. Kanté</button>
+        <button class="fbtn" data-f="who" data-v="MH">M. Hady</button>
+      </div>
+      <span class="fsep"></span>
+      <div class="filter-group" aria-label="Statut">
+        <span class="filter-label">Statut</span>
+        <button class="fbtn on" data-f="st" data-v="all">Tous</button>
+        <button class="fbtn" data-f="st" data-v="todo">À faire</button>
+        <button class="fbtn" data-f="st" data-v="wip">En cours</button>
+        <button class="fbtn" data-f="st" data-v="done">Faites</button>
+        <button class="fbtn" data-f="st" data-v="block">Bloquées</button>
+      </div>
+      <span class="fsep"></span>
+      <div class="filter-group" aria-label="Priorité">
+        <span class="filter-label">Priorité</span>
+        <button class="fbtn on" data-f="prio" data-v="all">Toutes</button>
+        <button class="fbtn" data-f="prio" data-v="crit">Critique</button>
+        <button class="fbtn" data-f="prio" data-v="haut">Haute</button>
+        <button class="fbtn" data-f="prio" data-v="norm">Normale</button>
+      </div>
+    </div>
+    <div class="filter-meta">
+      <input class="search" id="q" aria-label="Rechercher une action" placeholder="Rechercher une action…">
+      <span class="result-count" id="dashboard-result-count">0 action</span>
+      <button class="clear-filters" id="dashboard-clear" onclick="clearDashboardFilters()" hidden>Effacer les filtres</button>
+    </div>
   </div>
 
   <div id="groups"></div>
@@ -369,12 +431,34 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
       </div>
       <div class="panel-summary" id="personal-summary"></div>
     </div>
-    <div class="filters" aria-label="Filtrer mon espace par priorité">
-      <span style="font-size:.78rem;color:var(--tx2)">Priorité :</span>
-      <button class="fbtn on" data-f="personalPrio" data-v="all">Toutes</button>
-      <button class="fbtn" data-f="personalPrio" data-v="crit">Critique</button>
-      <button class="fbtn" data-f="personalPrio" data-v="haut">Haute</button>
-      <button class="fbtn" data-f="personalPrio" data-v="norm">Normale</button>
+    <div class="workspace-stats" aria-label="Résumé de mon espace">
+      <div class="workspace-stat"><b id="ws-active">0</b><span>Tâches actives</span></div>
+      <div class="workspace-stat"><b id="ws-critical">0</b><span>Priorités critiques</span></div>
+      <div class="workspace-stat"><b id="ws-late">0</b><span>Échéances dépassées</span></div>
+    </div>
+    <div class="filter-panel">
+      <div class="filters">
+        <div class="filter-group" aria-label="Filtrer mon espace par priorité">
+          <span class="filter-label">Priorité</span>
+          <button class="fbtn on" data-f="personalPrio" data-v="all">Toutes</button>
+          <button class="fbtn" data-f="personalPrio" data-v="crit">Critique</button>
+          <button class="fbtn" data-f="personalPrio" data-v="haut">Haute</button>
+          <button class="fbtn" data-f="personalPrio" data-v="norm">Normale</button>
+        </div>
+        <span class="fsep"></span>
+        <div class="filter-group" aria-label="Filtrer mon espace par statut">
+          <span class="filter-label">Statut</span>
+          <button class="fbtn on" data-f="personalSt" data-v="all">Tous</button>
+          <button class="fbtn" data-f="personalSt" data-v="todo">À faire</button>
+          <button class="fbtn" data-f="personalSt" data-v="wip">En cours</button>
+          <button class="fbtn" data-f="personalSt" data-v="done">Faites</button>
+          <button class="fbtn" data-f="personalSt" data-v="block">Bloquées</button>
+        </div>
+      </div>
+      <div class="filter-meta">
+        <span class="result-count" id="personal-result-count">0 tâche</span>
+        <button class="clear-filters" id="personal-clear" onclick="clearPersonalFilters()" hidden>Effacer les filtres</button>
+      </div>
     </div>
     <h2>Mes actions du plan <span class="tag" id="assigned-count">0</span></h2>
     <div class="personal-list" id="assigned-list"></div>
@@ -395,11 +479,13 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
     APSIA © 2026 · Dashboard de pilotage interne · réservé aux trois Parties du contrat tripartite<br>
     Lancement public cible : lundi 5 octobre 2026 · Conakry, Guinée
   </footer>
-</div>
+</main>
 
-<dialog id="dlgAuth">
+<div class="toast-region" id="toast-region" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<dialog id="dlgAuth" aria-labelledby="auth-title">
   <img class="auth-brand" src="10_app-icon_1024.png" alt="" width="1024" height="1024">
-  <h2 style="margin:0 0 6px">Accès sécurisé APSIA</h2>
+  <h2 id="auth-title" style="margin:0 0 6px">Accès sécurisé APSIA</h2>
   <p class="identity-intro">Connectez-vous ou créez vos identifiants lors de votre premier accès.</p>
   <div class="auth-tabs">
     <button class="auth-tab on" data-auth="login" onclick="showAuthPanel('login')">Se connecter</button>
@@ -407,15 +493,15 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
   <div class="auth-msg" id="auth-msg"></div>
   <div class="auth-panel on" id="auth-login">
-    <div class="field"><label>Adresse e-mail</label><input type="email" id="login-email" autocomplete="email" placeholder="nom@exemple.com"></div>
-    <div class="field"><label>Mot de passe</label><input type="password" id="login-password" autocomplete="current-password" placeholder="Votre mot de passe"></div>
+    <div class="field"><label for="login-email">Adresse e-mail</label><input type="email" id="login-email" autocomplete="email" placeholder="nom@exemple.com"></div>
+    <div class="field"><label for="login-password">Mot de passe</label><input type="password" id="login-password" autocomplete="current-password" placeholder="Votre mot de passe"></div>
     <button class="btn btn-p" id="login-submit" onclick="signIn()">Se connecter</button>
   </div>
   <div class="auth-panel" id="auth-signup">
-    <div class="field"><label>Adresse e-mail</label><input type="email" id="signup-email" autocomplete="email" placeholder="nom@exemple.com"></div>
+    <div class="field"><label for="signup-email">Adresse e-mail</label><input type="email" id="signup-email" autocomplete="email" placeholder="nom@exemple.com"></div>
     <div class="frow">
-      <div class="field"><label>Mot de passe</label><input type="password" id="signup-password" autocomplete="new-password" placeholder="6 caractères minimum"></div>
-      <div class="field"><label>Confirmer</label><input type="password" id="signup-confirm" autocomplete="new-password" placeholder="Répétez le mot de passe"></div>
+      <div class="field"><label for="signup-password">Mot de passe</label><input type="password" id="signup-password" autocomplete="new-password" placeholder="6 caractères minimum"></div>
+      <div class="field"><label for="signup-confirm">Confirmer</label><input type="password" id="signup-confirm" autocomplete="new-password" placeholder="Répétez le mot de passe"></div>
     </div>
     <div class="field"><label>Votre profil APSIA</label></div>
     <div class="identity-options">
@@ -428,8 +514,8 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 </dialog>
 
-<dialog id="dlgAccount">
-  <h2 style="margin:0">Mon compte</h2>
+<dialog id="dlgAccount" aria-labelledby="account-title">
+  <h2 id="account-title" style="margin:0">Mon compte</h2>
   <div class="account-card"><span class="av av-all" id="account-avatar">?</span><div><div class="who" id="account-name">—</div><div class="role" id="account-email">—</div></div></div>
   <div class="actions" style="margin:0">
     <button class="btn btn-d" onclick="signOut()">Se déconnecter</button>
@@ -437,33 +523,33 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 </dialog>
 
-<dialog id="dlgPersonal">
+<dialog id="dlgPersonal" aria-labelledby="personal-h">
   <h2 id="personal-h" style="margin:0 0 14px">Nouvelle tâche personnelle</h2>
   <input type="hidden" id="personal-id">
-  <div class="field"><label>Intitulé</label><input type="text" id="personal-title" placeholder="Ex. Préparer le point hebdomadaire"></div>
-  <div class="field"><label>Détail (optionnel)</label><textarea id="personal-sub" placeholder="Précisions utiles"></textarea></div>
+  <div class="field"><label for="personal-title">Intitulé</label><input type="text" id="personal-title" placeholder="Ex. Préparer le point hebdomadaire"></div>
+  <div class="field"><label for="personal-sub">Détail (optionnel)</label><textarea id="personal-sub" placeholder="Précisions utiles"></textarea></div>
   <div class="frow">
-    <div class="field"><label>Priorité</label><select id="personal-priority"><option value="norm">Normale</option><option value="haut">Haute</option><option value="crit">Critique</option></select></div>
-    <div class="field"><label>Statut</label><select id="personal-status"><option value="todo">À faire</option><option value="wip">En cours</option><option value="done">Fait</option><option value="block">Bloqué</option></select></div>
+    <div class="field"><label for="personal-priority">Priorité</label><select id="personal-priority"><option value="norm">Normale</option><option value="haut">Haute</option><option value="crit">Critique</option></select></div>
+    <div class="field"><label for="personal-status">Statut</label><select id="personal-status"><option value="todo">À faire</option><option value="wip">En cours</option><option value="done">Fait</option><option value="block">Bloqué</option></select></div>
   </div>
-  <div class="field"><label>Échéance (optionnel)</label><input type="date" id="personal-due"></div>
+  <div class="field"><label for="personal-due">Échéance (optionnel)</label><input type="date" id="personal-due"></div>
   <div class="actions" style="margin:6px 0 0"><button class="btn btn-p" onclick="savePersonalTask()">Enregistrer</button><button class="btn" onclick="document.getElementById('dlgPersonal').close()">Annuler</button></div>
 </dialog>
 
-<dialog id="dlgRequest">
-  <h2 style="margin:0 0 14px">Demander une tâche</h2>
-  <div class="field"><label>Destinataire</label><select id="request-recipient"></select></div>
-  <div class="field"><label>Intitulé</label><input type="text" id="request-title" placeholder="Ex. Vérifier le contrat fournisseur"></div>
-  <div class="field"><label>Motif ou détail (optionnel)</label><textarea id="request-sub" placeholder="Pourquoi cette tâche est nécessaire"></textarea></div>
+<dialog id="dlgRequest" aria-labelledby="request-title-dialog">
+  <h2 id="request-title-dialog" style="margin:0 0 14px">Demander une tâche</h2>
+  <div class="field"><label for="request-recipient">Destinataire</label><select id="request-recipient"></select></div>
+  <div class="field"><label for="request-title">Intitulé</label><input type="text" id="request-title" placeholder="Ex. Vérifier le contrat fournisseur"></div>
+  <div class="field"><label for="request-sub">Motif ou détail (optionnel)</label><textarea id="request-sub" placeholder="Pourquoi cette tâche est nécessaire"></textarea></div>
   <div class="frow">
-    <div class="field"><label>Priorité</label><select id="request-priority"><option value="norm">Normale</option><option value="haut">Haute</option><option value="crit">Critique</option></select></div>
-    <div class="field"><label>Échéance (optionnel)</label><input type="date" id="request-due"></div>
+    <div class="field"><label for="request-priority">Priorité</label><select id="request-priority"><option value="norm">Normale</option><option value="haut">Haute</option><option value="crit">Critique</option></select></div>
+    <div class="field"><label for="request-due">Échéance (optionnel)</label><input type="date" id="request-due"></div>
   </div>
   <div class="actions" style="margin:6px 0 0"><button class="btn btn-p" onclick="sendTaskRequest()">Envoyer la demande</button><button class="btn" onclick="document.getElementById('dlgRequest').close()">Annuler</button></div>
 </dialog>
 
-<dialog id="dlg">
-  <h2 style="margin:0 0 12px">Rapport hebdomadaire</h2>
+<dialog id="dlg" aria-labelledby="report-title">
+  <h2 id="report-title" style="margin:0 0 12px">Rapport hebdomadaire</h2>
   <p style="font-size:.85rem;color:var(--tx2);margin-bottom:12px">Copie ce texte et colle-le dans le groupe WhatsApp APSIA.</p>
   <textarea id="rep" readonly></textarea>
   <div class="actions" style="margin:14px 0 0">
@@ -472,13 +558,13 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 </dialog>
 
-<dialog id="dlgCat">
+<dialog id="dlgCat" aria-labelledby="cat-h">
   <h2 id="cat-h" style="margin:0 0 14px">Nouvelle catégorie</h2>
   <input type="hidden" id="cat-id">
-  <div class="field"><label>Titre</label><input type="text" id="cat-title" placeholder="Ex. Partenariats"></div>
+  <div class="field"><label for="cat-title">Titre</label><input type="text" id="cat-title" placeholder="Ex. Partenariats"></div>
   <div class="frow">
-    <div class="field"><label>Couleur</label><input type="color" id="cat-color" value="#3b82f6"></div>
-    <div class="field"><label>Sous-titre (optionnel)</label><input type="text" id="cat-sub" placeholder="Courte description"></div>
+    <div class="field"><label for="cat-color">Couleur</label><input type="color" id="cat-color" value="#3b82f6"></div>
+    <div class="field"><label for="cat-sub">Sous-titre (optionnel)</label><input type="text" id="cat-sub" placeholder="Courte description"></div>
   </div>
   <div class="actions" style="margin:6px 0 0">
     <button class="btn btn-p" onclick="saveCat()">Enregistrer</button>
@@ -486,20 +572,20 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </div>
 </dialog>
 
-<dialog id="dlgTask">
+<dialog id="dlgTask" aria-labelledby="tk-h">
   <h2 id="tk-h" style="margin:0 0 14px">Nouvelle action</h2>
   <input type="hidden" id="tk-id">
-  <div class="field"><label>Catégorie</label><select id="tk-cat"></select></div>
-  <div class="field"><label>Intitulé de l'action</label><input type="text" id="tk-title" placeholder="Ex. Contacter le fournisseur X"></div>
-  <div class="field"><label>Détail (optionnel)</label><textarea id="tk-sub" placeholder="Précision, contexte…"></textarea></div>
+  <div class="field"><label for="tk-cat">Catégorie</label><select id="tk-cat"></select></div>
+  <div class="field"><label for="tk-title">Intitulé de l'action</label><input type="text" id="tk-title" placeholder="Ex. Contacter le fournisseur X"></div>
+  <div class="field"><label for="tk-sub">Détail (optionnel)</label><textarea id="tk-sub" placeholder="Précision, contexte…"></textarea></div>
   <div class="frow">
-    <div class="field"><label>Responsable</label><select id="tk-owner">
+    <div class="field"><label for="tk-owner">Responsable</label><select id="tk-owner">
       <option value="MD">M. Diawara</option><option value="MK">M. C. Kanté</option>
       <option value="MH">M. Hady</option><option value="ALL">Les trois Parties</option></select></div>
-    <div class="field"><label>Priorité</label><select id="tk-prio">
+    <div class="field"><label for="tk-prio">Priorité</label><select id="tk-prio">
       <option value="norm">Normal</option><option value="haut">Haut</option><option value="crit">Critique</option></select></div>
   </div>
-  <div class="field"><label>Échéance (optionnel)</label><input type="date" id="tk-due"></div>
+  <div class="field"><label for="tk-due">Échéance (optionnel)</label><input type="date" id="tk-due"></div>
   <div class="actions" style="margin:6px 0 0">
     <button class="btn btn-p" onclick="saveTask()">Enregistrer</button>
     <button class="btn" onclick="document.getElementById('dlgTask').close()">Annuler</button>
@@ -588,7 +674,7 @@ let PERSONAL_TASKS=[],TASK_REQUESTS=[],workspaceAvailable=true;
 let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégories ajoutées via Supabase
 let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
 let CURRENT='',SESSION=null,dataStarted=false,activitySubscribed=false;
-let F={who:'all',st:'all',prio:'all',personalPrio:'all',q:''};
+let F={who:'all',st:'all',prio:'all',personalPrio:'all',personalSt:'all',q:''};
 const CY=['todo','wip','done','block'];
 const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
 
@@ -677,17 +763,47 @@ function subscribeHistory(){
 }
 function st(id){return S[id]||'todo'}
 function fmt(d){if(!d)return '—';const[y,m,j]=d.split('-');return j+'/'+m}
+function daysUntil(d){
+  if(!d)return null;
+  const target=new Date(d+'T00:00:00'),today=new Date();today.setHours(0,0,0,0);
+  return Math.round((target-today)/864e5);
+}
 function dueCls(d,s){
   if(s==='done'||!d)return '';
-  const t=new Date(d),n=new Date();n.setHours(0,0,0,0);
-  const j=Math.round((t-n)/864e5);
+  const j=daysUntil(d);
   return j<0?'late':j<=7?'soon':'';
+}
+function dueHint(d,s){
+  if(!d||s==='done')return '';
+  const j=daysUntil(d);
+  if(j<0)return 'En retard de '+Math.abs(j)+' j';
+  if(j===0)return 'Aujourd’hui';
+  if(j===1)return 'Demain';
+  return j<=7?'Dans '+j+' j':'';
+}
+function priorityRank(p){return {crit:0,haut:1,norm:2}[p]??3}
+function statusOptions(current){return CY.map(value=>'<option value="'+value+'"'+(value===current?' selected':'')+'>'+LBL[value]+'</option>').join('')}
+function taskSort(a,b){
+  const byPriority=priorityRank(a.p||a.priority)-priorityRank(b.p||b.priority);if(byPriority)return byPriority;
+  const ad=a.d||a.due_date||'9999-12-31',bd=b.d||b.due_date||'9999-12-31';return ad.localeCompare(bd);
 }
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function notify(message,type){
+  const region=document.getElementById('toast-region'),toast=document.createElement('div');
+  toast.className='toast '+(type||'');toast.textContent=message;region.appendChild(toast);
+  setTimeout(()=>toast.remove(),4200);
+}
+function dialogBusy(id,busy){
+  const button=document.querySelector('#'+id+' .btn-p');if(!button)return;
+  if(busy){button.dataset.label=button.textContent;button.textContent='Enregistrement…'}
+  else button.textContent=button.dataset.label||'Enregistrer';
+  button.disabled=busy;
+}
 
 function render(){
   const g=document.getElementById('groups');g.innerHTML='';
+  let visibleCount=0;
   GROUPS.forEach(G=>{
     const ts=T.filter(t=>t.g===G.id);
     const done=ts.filter(t=>st(t.id)==='done').length;
@@ -698,6 +814,7 @@ function render(){
       if(F.q&&!(t.t+' '+t.s).toLowerCase().includes(F.q))return false;
       return true;
     });
+    visibleCount+=vis.length;
     if(!vis.length&&!(G.del&&!ts.length))return;   // masquer si filtré ; garder une catégorie ajoutée vide
     const d=document.createElement('div');d.className='grp';
     d.innerHTML='<div class="ghd"><div class="gtitle"><span class="gdot" style="background:'+G.d+'"></span>'+esc(G.t)+'</div>'+
@@ -709,10 +826,13 @@ function render(){
           '<div><div class="tt"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span>'+esc(t.t)+'</div>'+
           '<div class="tsub">'+esc(t.s)+'</div></div>'+
           '<div class="own"><span class="av '+P.c+'">'+(t.w==='ALL'?'★':t.w)+'</span>'+P.n.split(' ').slice(-1)[0]+'</div>'+
-          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+'</div></div>';
+          '<div class="due '+dueCls(t.d,s)+'">'+fmt(t.d)+(dueHint(t.d,s)?'<small>'+dueHint(t.d,s)+'</small>':'')+'</div></div>';
       }).join(''):'<div class="empty">Aucune action ne correspond aux filtres.</div>')+'</div>';
     g.appendChild(d);
   });
+  if(!visibleCount)g.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:12px">Aucune action ne correspond à ces filtres.</div>';
+  document.getElementById('dashboard-result-count').textContent=visibleCount+' action'+(visibleCount>1?'s':'')+' affichée'+(visibleCount>1?'s':'');
+  document.getElementById('dashboard-clear').hidden=F.who==='all'&&F.st==='all'&&F.prio==='all'&&!F.q;
   stats();
   renderHistory();
   renderPersonal();
@@ -756,7 +876,7 @@ async function logActivity(action,entityType,entityId,entityTitle,fromValue,toVa
   const event={actor:CURRENT,action,entity_type:entityType,entity_id:entityId||null,
     entity_title:entityTitle||'',from_value:fromValue||null,to_value:toValue||null};
   const {data,error}=await sb.from('activity_log').insert(event).select().single();
-  if(error){historyAvailable=false;renderHistory();console.error(error);return}
+  if(error){notify('Action enregistrée, mais sa trace n’a pas pu être ajoutée à l’historique.','err');console.error(error);return}
   historyAvailable=true;
   if(data&&!ACTIVITIES.some(a=>a.id===data.id))ACTIVITIES.unshift(data);
   ACTIVITIES=ACTIVITIES.slice(0,200);cache();renderHistory();subscribeHistory();
@@ -766,29 +886,40 @@ const REQUEST_LBL={pending:'À traiter',waiting:'En attente',accepted:'Acceptée
 function renderPersonal(){
   const el=document.getElementById('personal-list'),assignedEl=document.getElementById('assigned-list'),sum=document.getElementById('personal-summary');if(!el)return;
   const allAssigned=T.filter(t=>t.w===CURRENT||t.w==='ALL');
-  const assigned=allAssigned.filter(t=>F.personalPrio==='all'||t.p===F.personalPrio);
-  const personal=PERSONAL_TASKS.filter(t=>F.personalPrio==='all'||t.priority===F.personalPrio);
-  document.getElementById('assigned-count').textContent=F.personalPrio==='all'?allAssigned.length:assigned.length+' / '+allAssigned.length;
+  const assigned=allAssigned.filter(t=>(F.personalPrio==='all'||t.p===F.personalPrio)&&(F.personalSt==='all'||st(t.id)===F.personalSt)).sort(taskSort);
+  const personal=PERSONAL_TASKS.filter(t=>(F.personalPrio==='all'||t.priority===F.personalPrio)&&(F.personalSt==='all'||t.status===F.personalSt)).sort(taskSort);
+  const allMine=allAssigned.map(t=>({status:st(t.id),priority:t.p,due:t.d})).concat(PERSONAL_TASKS.map(t=>({status:t.status,priority:t.priority,due:t.due_date})));
+  document.getElementById('ws-active').textContent=allMine.filter(t=>t.status!=='done').length;
+  document.getElementById('ws-critical').textContent=allMine.filter(t=>t.status!=='done'&&t.priority==='crit').length;
+  document.getElementById('ws-late').textContent=allMine.filter(t=>t.status!=='done'&&daysUntil(t.due)!==null&&daysUntil(t.due)<0).length;
+  document.getElementById('personal-result-count').textContent=(assigned.length+personal.length)+' tâche'+(assigned.length+personal.length>1?'s':'')+' affichée'+(assigned.length+personal.length>1?'s':'');
+  const personalFiltered=F.personalPrio!=='all'||F.personalSt!=='all';
+  document.getElementById('personal-clear').hidden=!personalFiltered;
+  document.getElementById('assigned-count').textContent=personalFiltered?assigned.length+' / '+allAssigned.length:allAssigned.length;
   assignedEl.innerHTML=assigned.length?assigned.map(t=>{
     const status=st(t.id),collective=t.w==='ALL';
-    return '<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.t)+'</div><div class="personal-sub">'+esc(t.s||'')+'</div></div><button class="st st-'+status+'" style="width:auto" onclick="cyc(\''+t.id+'\')">'+LBL[status]+'</button></div><div class="personal-meta"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span><span>Échéance : '+fmt(t.d)+'</span>'+(collective?'<span>★ Action collective</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editTask(\''+t.id+'\')">Modifier</button>'+(t.del?'<button class="mini-btn no" onclick="delTask(\''+t.id+'\')">Supprimer</button>':'')+'</div></div>';
-  }).join(''):'<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">'+(F.personalPrio==='all'?'Aucune action du plan ne vous est attribuée.':'Aucune action du plan avec cette priorité.')+'</div>';
+    const group=GROUPS.find(g=>g.id===t.g);
+    return '<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.t)+'</div><div class="personal-sub">'+esc(t.s||'')+'</div></div><select class="st st-'+status+'" style="width:auto" aria-label="Statut de '+esc(t.t)+'" onchange="setPlanStatus(\''+t.id+'\',this.value)">'+statusOptions(status)+'</select></div><div class="personal-meta"><span class="prio p-'+t.p+'">'+(t.p==='crit'?'CRITIQUE':t.p==='haut'?'HAUT':'NORMAL')+'</span><span>'+(group?esc(group.t):'Plan d’action')+'</span><span class="due '+dueCls(t.d,status)+'">Échéance : '+fmt(t.d)+(dueHint(t.d,status)?' · '+dueHint(t.d,status):'')+'</span>'+(collective?'<span>★ Action collective</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editTask(\''+t.id+'\')">Modifier</button>'+(t.del?'<button class="mini-btn no" onclick="delTask(\''+t.id+'\')">Supprimer</button>':'')+'</div></div>';
+  }).join(''):'<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">'+(personalFiltered?'Aucune action du plan ne correspond à ces filtres.':'Aucune action du plan ne vous est attribuée.')+'</div>';
   if(!workspaceAvailable){sum.textContent=allAssigned.length+' action(s) du plan';document.getElementById('private-count').textContent='—';el.innerHTML='<div class="history-warning">Exécutez la migration Supabase pour activer les tâches personnelles.</div>';return}
-  document.getElementById('private-count').textContent=F.personalPrio==='all'?PERSONAL_TASKS.length:personal.length+' / '+PERSONAL_TASKS.length;
-  sum.textContent=allAssigned.length+' action(s) du plan · '+PERSONAL_TASKS.length+' tâche(s) personnelle(s)';
-  if(!personal.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">'+(F.personalPrio==='all'?'Aucune tâche personnelle. Créez votre première tâche.':'Aucune tâche personnelle avec cette priorité.')+'</div>';return}
-  el.innerHTML=personal.map(t=>'<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.title)+'</div><div class="personal-sub">'+esc(t.subtitle||'')+'</div></div><button class="st st-'+t.status+'" style="width:auto" onclick="cyclePersonal(\''+t.id+'\')">'+LBL[t.status]+'</button></div><div class="personal-meta"><span class="prio p-'+t.priority+'">'+(t.priority==='crit'?'CRITIQUE':t.priority==='haut'?'HAUT':'NORMAL')+'</span><span>Échéance : '+fmt(t.due_date)+'</span>'+(t.source_request_id?'<span>Issue d’une demande</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editPersonalTask(\''+t.id+'\')">Modifier</button><button class="mini-btn no" onclick="deletePersonalTask(\''+t.id+'\')">Supprimer</button></div></div>').join('');
+  document.getElementById('private-count').textContent=personalFiltered?personal.length+' / '+PERSONAL_TASKS.length:PERSONAL_TASKS.length;
+  sum.textContent=allAssigned.length+' action(s) du plan · '+PERSONAL_TASKS.length+' tâche(s) personnelle(s) · Choisissez directement le statut souhaité.';
+  if(!personal.length){el.innerHTML='<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">'+(personalFiltered?'Aucune tâche personnelle ne correspond à ces filtres.':'Aucune tâche personnelle. Créez votre première tâche.')+'</div>';return}
+  el.innerHTML=personal.map(t=>'<div class="personal-card"><div class="personal-top"><div><div class="personal-title">'+esc(t.title)+'</div><div class="personal-sub">'+esc(t.subtitle||'')+'</div></div><select class="st st-'+t.status+'" style="width:auto" aria-label="Statut de '+esc(t.title)+'" onchange="setPersonalStatus(\''+t.id+'\',this.value)">'+statusOptions(t.status)+'</select></div><div class="personal-meta"><span class="prio p-'+t.priority+'">'+(t.priority==='crit'?'CRITIQUE':t.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="due '+dueCls(t.due_date,t.status)+'">Échéance : '+fmt(t.due_date)+(dueHint(t.due_date,t.status)?' · '+dueHint(t.due_date,t.status):'')+'</span>'+(t.source_request_id?'<span>Issue d’une demande</span>':'')+'</div><div class="personal-actions"><button class="mini-btn" onclick="editPersonalTask(\''+t.id+'\')">Modifier</button><button class="mini-btn no" onclick="deletePersonalTask(\''+t.id+'\')">Supprimer</button></div></div>').join('');
 }
 function requestCard(r,received){
   const actor=PEOPLE[received?r.requester_actor:r.recipient_actor]||PEOPLE.ALL,status=REQUEST_LBL[r.status]||r.status;
+  const requestStatus=['pending','waiting'].includes(r.status)?'todo':'done',hint=dueHint(r.due_date,requestStatus);
   const actions=received&&['pending','waiting'].includes(r.status)?'<div class="request-actions"><button class="mini-btn ok" onclick="respondRequest(\''+r.id+'\',\'accepted\')">Accepter</button><button class="mini-btn no" onclick="respondRequest(\''+r.id+'\',\'refused\')">Refuser</button>'+(r.status==='pending'?'<button class="mini-btn wait" onclick="respondRequest(\''+r.id+'\',\'waiting\')">Mettre en attente</button>':'')+'</div>':'';
-  return '<div class="request-card"><div class="request-top"><div><div class="request-title">'+esc(r.title)+'</div><div class="request-sub">'+esc(r.subtitle||'')+'</div></div><span class="req-status req-'+r.status+'">'+esc(status)+'</span></div><div class="request-meta"><span class="av '+actor.c+'">'+(received?r.requester_actor:r.recipient_actor)+'</span><span>'+(received?'Demandée par ':'Envoyée à ')+esc(actor.n)+'</span><span>Échéance : '+fmt(r.due_date)+'</span></div>'+actions+'</div>';
+  return '<div class="request-card"><div class="request-top"><div><div class="request-title">'+esc(r.title)+'</div><div class="request-sub">'+esc(r.subtitle||'')+'</div></div><span class="req-status req-'+r.status+'">'+esc(status)+'</span></div><div class="request-meta"><span class="prio p-'+r.priority+'">'+(r.priority==='crit'?'CRITIQUE':r.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="av '+actor.c+'">'+(received?r.requester_actor:r.recipient_actor)+'</span><span>'+(received?'Demandée par ':'Envoyée à ')+esc(actor.n)+'</span><span class="due '+dueCls(r.due_date,requestStatus)+'">Échéance : '+fmt(r.due_date)+(hint?' · '+hint:'')+'</span></div>'+actions+'</div>';
 }
 function renderRequests(){
   const receivedEl=document.getElementById('received-requests'),sentEl=document.getElementById('sent-requests');if(!receivedEl)return;
   const badge=document.getElementById('request-badge');
   if(!workspaceAvailable){receivedEl.innerHTML='<div class="history-warning">Migration Supabase requise.</div>';sentEl.innerHTML='';badge.classList.remove('show');return}
-  const received=TASK_REQUESTS.filter(r=>r.recipient_actor===CURRENT),sent=TASK_REQUESTS.filter(r=>r.requester_actor===CURRENT),pending=received.filter(r=>r.status==='pending').length;
+  const order={pending:0,waiting:1,accepted:2,refused:3};
+  const requestSort=(a,b)=>(order[a.status]??4)-(order[b.status]??4)||priorityRank(a.priority)-priorityRank(b.priority)||String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'));
+  const received=TASK_REQUESTS.filter(r=>r.recipient_actor===CURRENT).sort(requestSort),sent=TASK_REQUESTS.filter(r=>r.requester_actor===CURRENT).sort(requestSort),pending=received.filter(r=>r.status==='pending').length;
   badge.textContent=pending;badge.classList.toggle('show',pending>0);
   document.getElementById('received-count').textContent=received.length;document.getElementById('sent-count').textContent=sent.length;
   receivedEl.innerHTML=received.length?received.map(r=>requestCard(r,true)).join(''):'<div class="empty" style="border:1px solid var(--bd2);border-radius:10px">Aucune demande reçue.</div>';
@@ -805,38 +936,39 @@ function editPersonalTask(id){
   document.getElementById('personal-title').value=t.title;document.getElementById('personal-sub').value=t.subtitle||'';document.getElementById('personal-priority').value=t.priority;document.getElementById('personal-status').value=t.status;document.getElementById('personal-due').value=t.due_date||'';document.getElementById('dlgPersonal').showModal();
 }
 async function savePersonalTask(){
-  const id=document.getElementById('personal-id').value,title=document.getElementById('personal-title').value.trim();if(!title){alert('Indiquez un intitulé.');return}
+  const id=document.getElementById('personal-id').value,title=document.getElementById('personal-title').value.trim();if(!title){notify('Indiquez un intitulé.','err');return}
   const values={user_id:SESSION.user.id,title,subtitle:document.getElementById('personal-sub').value.trim(),priority:document.getElementById('personal-priority').value,status:document.getElementById('personal-status').value,due_date:document.getElementById('personal-due').value||null,updated_at:new Date().toISOString()};
-  document.getElementById('dlgPersonal').close();
   const query=id?sb.from('personal_tasks').update(values).eq('id',id):sb.from('personal_tasks').insert(values);
-  const {data,error}=await query.select().single();if(error){alert('Enregistrement impossible.');console.error(error);return}
+  dialogBusy('dlgPersonal',true);const {data,error}=await query.select().single();dialogBusy('dlgPersonal',false);if(error){notify('Enregistrement impossible. Vérifiez votre connexion.','err');console.error(error);return}
+  document.getElementById('dlgPersonal').close();
   PERSONAL_TASKS=PERSONAL_TASKS.filter(t=>t.id!==data.id);PERSONAL_TASKS.unshift(data);renderPersonal();
-  await logActivity(id?'personal_updated':'personal_created','personal_task',data.id,title,null,null);
+  notify(id?'Tâche personnelle mise à jour.':'Tâche personnelle créée.','ok');await logActivity(id?'personal_updated':'personal_created','personal_task',data.id,title,null,null);
 }
-async function cyclePersonal(id){
-  const t=PERSONAL_TASKS.find(x=>x.id===id);if(!t)return;const previous=t.status,next=CY[(CY.indexOf(previous)+1)%CY.length];t.status=next;renderPersonal();
-  const {error}=await sb.from('personal_tasks').update({status:next,updated_at:new Date().toISOString()}).eq('id',id);if(error){t.status=previous;renderPersonal();console.error(error);return}
+async function setPersonalStatus(id,next){
+  const t=PERSONAL_TASKS.find(x=>x.id===id);if(!t||!CY.includes(next)||t.status===next)return;const previous=t.status;t.status=next;renderPersonal();
+  const {error}=await sb.from('personal_tasks').update({status:next,updated_at:new Date().toISOString()}).eq('id',id);if(error){t.status=previous;renderPersonal();notify('Le statut n’a pas pu être modifié.','err');console.error(error);return}
+  notify('Statut mis à jour : '+LBL[next]+'.','ok');
   await logActivity('personal_status_changed','personal_task',id,t.title,previous,next);
 }
 async function deletePersonalTask(id){
   const t=PERSONAL_TASKS.find(x=>x.id===id);if(!t||!confirm('Supprimer cette tâche personnelle ?'))return;
-  const {error}=await sb.from('personal_tasks').delete().eq('id',id);if(error){alert('Suppression impossible.');return}
-  PERSONAL_TASKS=PERSONAL_TASKS.filter(x=>x.id!==id);renderPersonal();await logActivity('personal_deleted','personal_task',id,t.title,null,null);
+  const {error}=await sb.from('personal_tasks').delete().eq('id',id);if(error){notify('Suppression impossible.','err');return}
+  PERSONAL_TASKS=PERSONAL_TASKS.filter(x=>x.id!==id);renderPersonal();notify('Tâche personnelle supprimée.','ok');await logActivity('personal_deleted','personal_task',id,t.title,null,null);
 }
 function openRequest(){
   const recipients=['MD','MK','MH'].filter(k=>k!==CURRENT);document.getElementById('request-recipient').innerHTML=recipients.map(k=>'<option value="'+k+'">'+esc(PEOPLE[k].n)+'</option>').join('');
   document.getElementById('request-title').value='';document.getElementById('request-sub').value='';document.getElementById('request-priority').value='norm';document.getElementById('request-due').value='';document.getElementById('dlgRequest').showModal();
 }
 async function sendTaskRequest(){
-  const title=document.getElementById('request-title').value.trim(),recipient=document.getElementById('request-recipient').value;if(!title||!recipient){alert('Indiquez un destinataire et un intitulé.');return}
+  const title=document.getElementById('request-title').value.trim(),recipient=document.getElementById('request-recipient').value;if(!title||!recipient){notify('Indiquez un destinataire et un intitulé.','err');return}
   const request={requester_user_id:SESSION.user.id,requester_actor:CURRENT,recipient_actor:recipient,title,subtitle:document.getElementById('request-sub').value.trim(),priority:document.getElementById('request-priority').value,due_date:document.getElementById('request-due').value||null};
-  const {data,error}=await sb.from('task_requests').insert(request).select().single();if(error){alert('Envoi impossible.');console.error(error);return}
-  document.getElementById('dlgRequest').close();TASK_REQUESTS.unshift(data);renderRequests();await logActivity('request_created','task_request',data.id,title,null,recipient);
+  dialogBusy('dlgRequest',true);const {data,error}=await sb.from('task_requests').insert(request).select().single();dialogBusy('dlgRequest',false);if(error){notify('Envoi impossible. Vérifiez votre connexion.','err');console.error(error);return}
+  document.getElementById('dlgRequest').close();TASK_REQUESTS.unshift(data);renderRequests();notify('Demande envoyée à '+PEOPLE[recipient].n+'.','ok');await logActivity('request_created','task_request',data.id,title,null,recipient);
 }
 async function respondRequest(id,response){
   const labels={accepted:'accepter',refused:'refuser',waiting:'mettre en attente'};if(!confirm('Confirmer : '+labels[response]+' cette demande ?'))return;
-  const {error}=await sb.rpc('respond_task_request',{p_request_id:id,p_response:response});if(error){alert('Réponse impossible : '+error.message);return}
-  await Promise.all([refetchRequests(),refetchPersonal()]);
+  const {error}=await sb.rpc('respond_task_request',{p_request_id:id,p_response:response});if(error){notify('Réponse impossible : '+error.message,'err');return}
+  await Promise.all([refetchRequests(),refetchPersonal()]);notify('Demande '+(response==='accepted'?'acceptée':response==='refused'?'refusée':'mise en attente')+'.','ok');
 }
 
 function stats(){
@@ -864,15 +996,15 @@ function stats(){
   }).join('');
 }
 
-async function cyc(id){
-  const previous=st(id),next=CY[(CY.indexOf(previous)+1)%4],task=T.find(t=>t.id===id);
+async function setPlanStatus(id,next){
+  const previous=st(id),task=T.find(t=>t.id===id);if(!CY.includes(next)||previous===next)return;
   const now=new Date().toISOString();
   S[id]=next;cache();render(); // mise à jour optimiste immédiate
   const {error}=await sb.from('task_status')
     .upsert({task_id:id,status:next,updated_at:now},{onConflict:'task_id'});
   setSync(error?'error':'online');
-  if(error)console.error(error);
-  else await logActivity('status_changed','task',id,task?task.t:id,previous,next);
+  if(error){S[id]=previous;cache();render();notify('Le statut n’a pas pu être synchronisé.','err');console.error(error)}
+  else{notify('Statut mis à jour : '+LBL[next]+'.','ok');await logActivity('status_changed','task',id,task?task.t:id,previous,next)}
 }
 async function reset(){
   if(!confirm('Remettre toutes les actions à « À faire » ? Cela réinitialise le tableau pour toute l’équipe.'))return;
@@ -902,7 +1034,7 @@ function report(){
 }
 function copyRep(){
   const t=document.getElementById('rep');t.select();
-  navigator.clipboard.writeText(t.value).then(()=>alert('Rapport copié.')).catch(()=>{document.execCommand('copy');alert('Rapport copié.')});
+  navigator.clipboard.writeText(t.value).then(()=>notify('Rapport copié.','ok')).catch(()=>{document.execCommand('copy');notify('Rapport copié.','ok')});
 }
 
 // ---- Ajout / édition / suppression de catégories et d'actions (partagés via Supabase) ----
@@ -925,19 +1057,17 @@ function editCat(id){
 }
 async function saveCat(){
   const title=document.getElementById('cat-title').value.trim();
-  if(!title){alert('Indique un titre de catégorie.');return}
+  if(!title){notify('Indiquez un titre de catégorie.','err');return}
   const editing=!!document.getElementById('cat-id').value;
   const id=document.getElementById('cat-id').value||uid('c');
   const ex=customCats.find(c=>c.id===id);
   const c={id,title,color:document.getElementById('cat-color').value,
            subtitle:document.getElementById('cat-sub').value.trim(),position:ex?ex.position:Date.now()};
-  document.getElementById('dlgCat').close();
-  customCats=customCats.filter(x=>x.id!==id);customCats.push(c);   // affichage optimiste
-  rebuild();cache();render();
-  const {error}=await sb.from('categories').upsert(c,{onConflict:'id'});
+  dialogBusy('dlgCat',true);const {error}=await sb.from('categories').upsert(c,{onConflict:'id'});dialogBusy('dlgCat',false);
   setSync(error?'error':'online');
-  if(error){console.error(error);alert('Enregistrement en ligne échoué (table « categories » créée ?). La modif reste visible sur cet appareil.');}
-  else await logActivity(editing?'category_updated':'category_created','category',id,title,null,null);
+  if(error){console.error(error);notify('La catégorie n’a pas pu être enregistrée.','err');return}
+  document.getElementById('dlgCat').close();customCats=customCats.filter(x=>x.id!==id);customCats.push(c);rebuild();cache();render();
+  notify(editing?'Catégorie mise à jour.':'Catégorie créée.','ok');await logActivity(editing?'category_updated':'category_created','category',id,title,null,null);
 }
 function openTask(catId,owner){
   document.getElementById('tk-h').textContent=owner==='ALL'?'Nouvelle tâche commune':'Nouvelle action';
@@ -969,7 +1099,7 @@ function editTask(id){
 }
 async function saveTask(){
   const title=document.getElementById('tk-title').value.trim();
-  if(!title){alert('Indique l’intitulé de l’action.');return}
+  if(!title){notify('Indiquez l’intitulé de l’action.','err');return}
   const editing=!!document.getElementById('tk-id').value;
   const id=document.getElementById('tk-id').value||uid('x');
   const ex=customTasks.find(t=>t.id===id);
@@ -978,50 +1108,57 @@ async function saveTask(){
            owner:document.getElementById('tk-owner').value,
            priority:document.getElementById('tk-prio').value,
            due_date:document.getElementById('tk-due').value||null,position:ex?ex.position:Date.now()};
-  document.getElementById('dlgTask').close();
-  customTasks=customTasks.filter(x=>x.id!==id);customTasks.push(t);   // affichage optimiste
-  rebuild();cache();render();
-  const {error}=await sb.from('tasks').upsert(t,{onConflict:'id'});
+  dialogBusy('dlgTask',true);const {error}=await sb.from('tasks').upsert(t,{onConflict:'id'});dialogBusy('dlgTask',false);
   setSync(error?'error':'online');
-  if(error){console.error(error);alert('Enregistrement en ligne échoué (table « tasks » créée ?). La modif reste visible sur cet appareil.');}
-  else await logActivity(editing?'task_updated':'task_created','task',id,title,null,null);
+  if(error){console.error(error);notify('L’action n’a pas pu être enregistrée.','err');return}
+  document.getElementById('dlgTask').close();customTasks=customTasks.filter(x=>x.id!==id);customTasks.push(t);rebuild();cache();render();
+  notify(editing?'Action mise à jour.':'Tâche commune créée.','ok');await logActivity(editing?'task_updated':'task_created','task',id,title,null,null);
 }
 async function delTask(id){
   const task=T.find(t=>t.id===id);
   if(!confirm('Supprimer cette action pour toute l’équipe ?'))return;
-  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];rebuild();cache();render();
   const {error}=await sb.from('tasks').delete().eq('id',id);
-  await sb.from('task_status').delete().eq('task_id',id);
+  if(!error)await sb.from('task_status').delete().eq('task_id',id);
   setSync(error?'error':'online');
-  if(error)console.error(error);
-  else await logActivity('task_deleted','task',id,task?task.t:id,null,null);
+  if(error){console.error(error);notify('L’action n’a pas pu être supprimée.','err');return}
+  customTasks=customTasks.filter(t=>t.id!==id);delete S[id];rebuild();cache();render();notify('Action supprimée.','ok');await logActivity('task_deleted','task',id,task?task.t:id,null,null);
 }
 async function delCat(id){
   const group=GROUPS.find(g=>g.id===id);
   const kids=customTasks.filter(t=>t.category_id===id);
   if(!confirm('Supprimer cette catégorie'+(kids.length?' et ses '+kids.length+' action(s) ajoutée(s)':'')+' pour toute l’équipe ?'))return;
-  customCats=customCats.filter(c=>c.id!==id);
-  customTasks=customTasks.filter(t=>t.category_id!==id);
-  kids.forEach(t=>delete S[t.id]);
-  rebuild();cache();render();
-  await sb.from('tasks').delete().eq('category_id',id);
+  const taskDelete=await sb.from('tasks').delete().eq('category_id',id);
+  if(taskDelete.error){notify('Les actions de cette catégorie n’ont pas pu être supprimées.','err');return}
   const {error}=await sb.from('categories').delete().eq('id',id);
   if(kids.length)await sb.from('task_status').delete().in('task_id',kids.map(t=>t.id));
   setSync(error?'error':'online');
-  if(error)console.error(error);
-  else await logActivity('category_deleted','category',id,group?group.t:id,null,null);
+  if(error){console.error(error);notify('La catégorie n’a pas pu être supprimée.','err');return}
+  customCats=customCats.filter(c=>c.id!==id);customTasks=customTasks.filter(t=>t.category_id!==id);kids.forEach(t=>delete S[t.id]);rebuild();cache();render();
+  notify('Catégorie supprimée.','ok');await logActivity('category_deleted','category',id,group?group.t:id,null,null);
 }
 
+function syncFilterButtons(){
+  document.querySelectorAll('.fbtn[data-f]').forEach(b=>b.setAttribute('aria-pressed',String(F[b.dataset.f]===b.dataset.v)));
+}
 document.querySelectorAll('.fbtn').forEach(b=>b.onclick=()=>{
   const f=b.dataset.f;
   document.querySelectorAll('.fbtn[data-f="'+f+'"]').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on');F[f]=b.dataset.v;render();
+  b.classList.add('on');F[f]=b.dataset.v;syncFilterButtons();render();
 });
 document.getElementById('q').oninput=e=>{F.q=e.target.value.toLowerCase();render()};
+function clearFilterGroup(name){
+  F[name]='all';document.querySelectorAll('.fbtn[data-f="'+name+'"]').forEach(b=>b.classList.toggle('on',b.dataset.v==='all'));
+}
+function clearDashboardFilters(){
+  ['who','st','prio'].forEach(clearFilterGroup);F.q='';document.getElementById('q').value='';syncFilterButtons();render();
+}
+function clearPersonalFilters(){
+  ['personalPrio','personalSt'].forEach(clearFilterGroup);syncFilterButtons();render();
+}
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+name));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
+  document.querySelectorAll('.nav-btn').forEach(b=>{const active=b.dataset.view===name;b.classList.toggle('on',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   if(name==='historique')renderHistory();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -1122,6 +1259,7 @@ document.getElementById('login-password').addEventListener('keydown',e=>{if(e.ke
 document.getElementById('signup-confirm').addEventListener('keydown',e=>{if(e.key==='Enter')signUp()});
 
 document.getElementById('cd').textContent='J-'+Math.ceil((new Date('2026-10-05')-new Date())/864e5);
+syncFilterButtons();
 updateIdentity();
 render();          // rendu immédiat depuis le cache local
 initAuth();         // authentification, puis chargement et temps réel

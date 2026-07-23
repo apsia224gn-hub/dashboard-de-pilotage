@@ -78,13 +78,20 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 - **Demandes** : proposer une tâche à un autre associé. Le destinataire reçoit une notification
   et peut accepter, refuser ou mettre la demande en attente. Une acceptation crée automatiquement
   la tâche dans son espace personnel.
-- **Changer un statut** : dans `Mon espace`, cliquer sur le badge → À faire → En cours → Fait → Bloqué.
+- **Changer un statut** : dans `Mon espace`, ouvrir le menu de statut d'une tâche puis choisir directement
+  À faire, En cours, Fait ou Bloqué.
 - **Modifier une action du plan** : utiliser le bouton `Modifier` dans `Mes actions du plan`.
 - **Supprimer** : seules les tâches personnelles ou actions ajoutées peuvent être supprimées ;
   les actions de base du plan restent modifiables mais ne sont pas supprimables.
 - Tout ajout / modification / suppression est **partagé en temps réel** avec les trois Parties.
 - **Indicateur d'en-tête** : *Synchronisé* / *Hors ligne* / *Erreur de sync*.
 - **Rapport hebdo** : bouton « Générer le rapport hebdo » → copier → coller dans le groupe WhatsApp APSIA.
+
+## Contrôle qualité
+
+Exécuter `node scripts/audit.mjs` pour vérifier la syntaxe JavaScript, les identifiants et labels HTML,
+la navigation, les ressources locales, le caractère non modifiable du Dashboard et les éléments essentiels
+du schéma SQL. Le dernier rapport détaillé est disponible dans [`AUDIT.md`](AUDIT.md).
 
 ## Sécurité
 

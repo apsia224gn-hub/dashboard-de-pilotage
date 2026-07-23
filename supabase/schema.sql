@@ -1,7 +1,7 @@
 -- ============================================================
 -- APSIA — Dashboard de pilotage · schéma Supabase
 -- ============================================================
--- À exécuter UNE SEULE FOIS dans Supabase :
+-- À exécuter dans Supabase lors de l'installation, puis après chaque évolution du schéma :
 --   Dashboard → SQL Editor → New query → coller ce fichier → Run
 --
 -- Le dashboard utilise Supabase Auth (e-mail + mot de passe).
@@ -268,7 +268,7 @@ create policy "team create requests" on public.task_requests
   );
 
 do $$
-begina
+begin
   alter publication supabase_realtime add table public.task_requests;
 exception when duplicate_object then
   null;
