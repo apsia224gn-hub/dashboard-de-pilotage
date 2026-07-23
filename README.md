@@ -36,10 +36,9 @@ d'accès (RLS) et le temps réel. Il est **idempotent** : si vous aviez déjà e
 version précédente, ré-exécutez-le simplement pour ajouter les tables manquantes — rien
 n'est perdu. **Exécutez ce schéma avant de créer le premier compte.**
 
-Dans Supabase → **Authentication → Providers → Email**, laisser le fournisseur Email activé.
-Le projet demande actuellement une confirmation par e-mail : chaque associé doit cliquer sur
-le lien reçu avant sa première connexion. Dans **Authentication → URL Configuration**, ajouter
-l'URL Vercel du dashboard aux Redirect URLs.
+Dans Supabase → **Authentication → Providers → Email**, laisser le fournisseur Email activé,
+mais désactiver **Confirm email** afin que le compte soit utilisable immédiatement après sa
+création. Les trois comptes restent protégés par leur mot de passe et les politiques RLS.
 
 ### 2. Configuration du dashboard
 
