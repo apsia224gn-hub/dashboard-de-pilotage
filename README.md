@@ -10,13 +10,15 @@ et les autres voient les changements instantanément — sur n'importe quel appa
 
 - **`index.html`** — application complète en un seul fichier (HTML + CSS + JS, aucune étape de build).
 - **Supabase Auth** — comptes individuels par e-mail et mot de passe.
-- **Supabase** — cinq tables :
+- **Supabase** — sept tables :
   - `profiles` : lie chaque compte à l'un des trois associés APSIA ;
   - `task_status` : statut partagé de chaque action (à faire / en cours / fait / bloqué) ;
   - `categories` : catégories ajoutées ou modifiées depuis le dashboard ;
   - `tasks` : actions ajoutées, et modifications des actions du plan de base (surcharges).
   - `activity_log` : journal append-only indiquant qui a créé, modifié, supprimé ou changé un statut.
-  - + diffusion **temps réel** des quatre tables.
+  - `personal_tasks` : tâches privées accessibles uniquement à leur propriétaire ;
+  - `task_requests` : demandes de tâches envoyées entre associés et état de leur traitement.
+  - + diffusion **temps réel** des tables de travail.
 - **Vercel** — hébergement statique du fichier `index.html`.
 - **`localStorage`** — cache local : affichage instantané au chargement et repli si le réseau est coupé.
 
@@ -31,7 +33,8 @@ le plan de base : une entrée Supabase de même identifiant remplace/édite cell
 Dashboard Supabase → **SQL Editor** → **New query** → coller le contenu de
 [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
 
-Le script crée les tables `profiles`, `task_status`, `categories`, `tasks` et `activity_log`, active les politiques
+Le script crée les tables `profiles`, `task_status`, `categories`, `tasks`, `activity_log`,
+`personal_tasks` et `task_requests`, ainsi que la fonction atomique de traitement des demandes. Il active les politiques
 d'accès (RLS) et le temps réel. Il est **idempotent** : si vous aviez déjà exécuté une
 version précédente, ré-exécutez-le simplement pour ajouter les tables manquantes — rien
 n'est perdu. **Exécutez ce schéma avant de créer le premier compte.**
@@ -66,6 +69,10 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
   est utilisé comme auteur dans l'historique et comme responsable présélectionné.
 - **Naviguer** : le menu sépare le `Dashboard`, les liens vers les `Dossiers` Drive et
   l'`Historique` partagé indiquant qui a fait quoi et à quelle heure.
+- **Mon espace** : chaque associé gère ses propres tâches, invisibles dans l'espace privé des autres.
+- **Demandes** : proposer une tâche à un autre associé. Le destinataire reçoit une notification
+  et peut accepter, refuser ou mettre la demande en attente. Une acceptation crée automatiquement
+  la tâche dans son espace personnel.
 - **Changer un statut** : cliquer sur le badge d'une action → À faire → En cours → Fait → Bloqué.
 - **Ajouter une action** : bouton « ＋ Nouvelle action », ou le **＋** dans l'en-tête d'une catégorie
   (pré-sélectionne cette catégorie) → remplir le formulaire → **Enregistrer**.
@@ -86,3 +93,6 @@ Le dashboard utilise Supabase Auth. Les politiques RLS refusent l'accès aux don
 tant qu'aucune session authentifiée n'est active. Le journal vérifie également que l'auteur
 enregistré correspond au profil lié au compte connecté. La clé publishable reste publique,
 mais ne permet plus à elle seule de lire ou modifier les tables.
+
+Les tâches de `Mon espace` sont privées au niveau de la base. Pour assurer la traçabilité convenue,
+leur intitulé et les opérations réalisées apparaissent néanmoins dans l'historique commun.
