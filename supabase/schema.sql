@@ -4,12 +4,56 @@
 -- À exécuter UNE SEULE FOIS dans Supabase :
 --   Dashboard → SQL Editor → New query → coller ce fichier → Run
 --
--- Cette table stocke le statut partagé de chaque action du plan.
--- Le dashboard (index.html) la lit, l'écrit et s'abonne à ses
--- changements en temps réel pour synchroniser les trois associés.
+-- Le dashboard utilise Supabase Auth (e-mail + mot de passe).
+-- Chaque compte est lié à l'un des trois profils contractuels APSIA.
 -- ============================================================
 
--- 1) Table des statuts (une ligne par action : S1, T1, J1, ...)
+-- 1) Profils associés aux comptes Supabase Auth
+create table if not exists public.profiles (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  actor      text not null unique check (actor in ('MD','MK','MH')),
+  full_name  text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+
+drop policy if exists "authenticated read own profile" on public.profiles;
+create policy "authenticated read own profile" on public.profiles
+  for select to authenticated using (user_id = auth.uid());
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  selected_actor text := new.raw_user_meta_data ->> 'actor_code';
+  selected_name text;
+begin
+  selected_name := case selected_actor
+    when 'MD' then 'Mohamed DIAWARA'
+    when 'MK' then 'Mamadou Cellou KANTÉ'
+    when 'MH' then 'Mohamed HADY'
+    else null
+  end;
+
+  if selected_name is null then
+    raise exception 'Profil APSIA invalide';
+  end if;
+
+  insert into public.profiles (user_id,actor,full_name)
+  values (new.id,selected_actor,selected_name);
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+-- 2) Table des statuts (une ligne par action : S1, T1, J1, ...)
 create table if not exists public.task_status (
   task_id    text primary key,
   status     text not null default 'todo'
@@ -17,23 +61,24 @@ create table if not exists public.task_status (
   updated_at timestamptz not null default now()
 );
 
--- 2) Row Level Security
---    Dashboard interne aux 3 Parties, sans système de connexion :
---    la clé publishable (rôle "anon") a un accès complet à CETTE
---    table uniquement. L'URL du dashboard fait office de secret.
+-- 3) Accès réservé aux comptes authentifiés
 alter table public.task_status enable row level security;
 
 drop policy if exists "anon read"   on public.task_status;
 drop policy if exists "anon insert" on public.task_status;
 drop policy if exists "anon update" on public.task_status;
 drop policy if exists "anon delete" on public.task_status;
+drop policy if exists "team read status"   on public.task_status;
+drop policy if exists "team insert status" on public.task_status;
+drop policy if exists "team update status" on public.task_status;
+drop policy if exists "team delete status" on public.task_status;
 
-create policy "anon read"   on public.task_status for select using (true);
-create policy "anon insert" on public.task_status for insert with check (true);
-create policy "anon update" on public.task_status for update using (true) with check (true);
-create policy "anon delete" on public.task_status for delete using (true);
+create policy "team read status"   on public.task_status for select to authenticated using (true);
+create policy "team insert status" on public.task_status for insert to authenticated with check (true);
+create policy "team update status" on public.task_status for update to authenticated using (true) with check (true);
+create policy "team delete status" on public.task_status for delete to authenticated using (true);
 
--- 3) Temps réel : diffuser les changements de cette table
+-- 4) Temps réel : diffuser les changements de cette table
 --    (ignore l'erreur si la table y est déjà)
 do $$
 begin
@@ -44,7 +89,7 @@ end $$;
 
 
 -- ============================================================
--- 4) Catégories ajoutées depuis le dashboard (en plus de celles du code)
+-- 5) Catégories ajoutées depuis le dashboard (en plus de celles du code)
 -- ============================================================
 create table if not exists public.categories (
   id         text primary key,
@@ -61,11 +106,15 @@ drop policy if exists "anon read cat"   on public.categories;
 drop policy if exists "anon insert cat" on public.categories;
 drop policy if exists "anon update cat" on public.categories;
 drop policy if exists "anon delete cat" on public.categories;
+drop policy if exists "team read cat"   on public.categories;
+drop policy if exists "team insert cat" on public.categories;
+drop policy if exists "team update cat" on public.categories;
+drop policy if exists "team delete cat" on public.categories;
 
-create policy "anon read cat"   on public.categories for select using (true);
-create policy "anon insert cat" on public.categories for insert with check (true);
-create policy "anon update cat" on public.categories for update using (true) with check (true);
-create policy "anon delete cat" on public.categories for delete using (true);
+create policy "team read cat"   on public.categories for select to authenticated using (true);
+create policy "team insert cat" on public.categories for insert to authenticated with check (true);
+create policy "team update cat" on public.categories for update to authenticated using (true) with check (true);
+create policy "team delete cat" on public.categories for delete to authenticated using (true);
 
 do $$
 begin
@@ -76,7 +125,7 @@ end $$;
 
 
 -- ============================================================
--- 5) Actions ajoutées depuis le dashboard (en plus de celles du code)
+-- 6) Actions ajoutées depuis le dashboard (en plus de celles du code)
 -- ============================================================
 create table if not exists public.tasks (
   id          text primary key,
@@ -96,11 +145,15 @@ drop policy if exists "anon read task"   on public.tasks;
 drop policy if exists "anon insert task" on public.tasks;
 drop policy if exists "anon update task" on public.tasks;
 drop policy if exists "anon delete task" on public.tasks;
+drop policy if exists "team read task"   on public.tasks;
+drop policy if exists "team insert task" on public.tasks;
+drop policy if exists "team update task" on public.tasks;
+drop policy if exists "team delete task" on public.tasks;
 
-create policy "anon read task"   on public.tasks for select using (true);
-create policy "anon insert task" on public.tasks for insert with check (true);
-create policy "anon update task" on public.tasks for update using (true) with check (true);
-create policy "anon delete task" on public.tasks for delete using (true);
+create policy "team read task"   on public.tasks for select to authenticated using (true);
+create policy "team insert task" on public.tasks for insert to authenticated with check (true);
+create policy "team update task" on public.tasks for update to authenticated using (true) with check (true);
+create policy "team delete task" on public.tasks for delete to authenticated using (true);
 
 do $$
 begin
@@ -111,7 +164,7 @@ end $$;
 
 
 -- ============================================================
--- 6) Journal d'activité partagé (qui a fait quoi)
+-- 7) Journal d'activité partagé (qui a fait quoi)
 -- ============================================================
 create table if not exists public.activity_log (
   id           bigint generated always as identity primary key,
@@ -132,13 +185,20 @@ alter table public.activity_log enable row level security;
 
 drop policy if exists "anon read activity"   on public.activity_log;
 drop policy if exists "anon insert activity" on public.activity_log;
+drop policy if exists "team read activity"   on public.activity_log;
+drop policy if exists "team insert activity" on public.activity_log;
 
-create policy "anon read activity" on public.activity_log
-  for select using (true);
-create policy "anon insert activity" on public.activity_log
-  for insert with check (true);
+create policy "team read activity" on public.activity_log
+  for select to authenticated using (true);
+create policy "team insert activity" on public.activity_log
+  for insert to authenticated with check (
+    exists (
+      select 1 from public.profiles p
+      where p.user_id = auth.uid() and p.actor = activity_log.actor
+    )
+  );
 
--- Le journal est volontairement append-only : aucune politique anon
+-- Le journal est volontairement append-only : aucune politique client
 -- d'UPDATE ou de DELETE, afin de préserver les événements enregistrés.
 do $$
 begin

@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>APSIA — Dashboard de pilotage</title>
+<meta name="description" content="Dashboard interne de pilotage du projet APSIA.">
+<meta name="theme-color" content="#07101a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="APSIA Pilotage">
+<link rel="icon" type="image/png" sizes="32x32" href="11_favicon_32.png">
+<link rel="icon" type="image/png" sizes="64x64" href="11_favicon_64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="11_favicon_192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="11_favicon_192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
 :root{
   --bg:#07101a; --bg2:#0a1628; --card:#0f2035; --surface:#162840; --elev:#1a3050;
@@ -14,12 +24,13 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--tx);font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.6;padding-bottom:60px}
+.auth-locked .view,.auth-locked footer{visibility:hidden}
 .wrap{max-width:1200px;margin:0 auto;padding:0 20px}
 
 header{background:rgba(7,16,26,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd2);padding:16px 0;position:sticky;top:0;z-index:100}
 .hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.logo{font-weight:800;font-size:1.3rem;letter-spacing:.04em}
-.logo span{color:var(--accent)}
+.logo{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;color:var(--tx)}
+.logo img{display:block;width:auto;height:33px;object-fit:contain}
 .logo small{display:block;font-size:.7rem;font-weight:500;color:var(--tx2);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
 .countdown{text-align:right}
 .cd-num{font-size:1.8rem;font-weight:800;color:var(--accent);line-height:1}
@@ -133,7 +144,7 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 
 .field{margin-bottom:12px}
 .field label{display:block;font-size:.76rem;color:var(--tx2);margin-bottom:5px;font-weight:600}
-.field input[type=text],.field input[type=date],.field select,.field textarea{width:100%;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:9px 12px;font-size:.88rem;font-family:inherit}
+.field input[type=text],.field input[type=date],.field input[type=email],.field input[type=password],.field select,.field textarea{width:100%;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);border-radius:8px;padding:9px 12px;font-size:.88rem;font-family:inherit}
 .field input[type=color]{width:100%;height:40px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:3px;cursor:pointer}
 .field textarea{min-height:70px;resize:vertical;line-height:1.5}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -162,6 +173,17 @@ textarea{width:100%;min-height:300px;background:var(--bg2);border:1px solid var(
 .identity-option input:checked+label{border-color:var(--accent);background:rgba(59,130,246,.12);box-shadow:0 0 0 2px rgba(59,130,246,.12)}
 .identity-option .who{font-size:.9rem;font-weight:700}
 .identity-option .role{font-size:.74rem;color:var(--tx2)}
+.auth-tabs{display:flex;gap:6px;background:var(--bg2);border-radius:9px;padding:4px;margin:14px 0}
+.auth-tab{flex:1;background:transparent;border:0;border-radius:7px;color:var(--tx2);padding:9px;font:600 .82rem/1 inherit;cursor:pointer}
+.auth-tab.on{background:var(--surface);color:var(--tx)}
+.auth-panel{display:none}.auth-panel.on{display:block}
+.auth-msg{display:none;border-radius:8px;padding:9px 11px;margin:10px 0;font-size:.8rem}
+.auth-msg.err{display:block;background:rgba(239,68,68,.11);color:#fca5a5}
+.auth-msg.ok{display:block;background:rgba(34,197,94,.11);color:#86efac}
+.auth-help{font-size:.76rem;color:var(--tx2);margin:8px 0 14px}
+.account-card{display:flex;align-items:center;gap:13px;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:14px;margin:14px 0}
+.account-card .av{width:38px;height:38px}
+.auth-brand{display:block;width:68px;height:68px;border-radius:16px;margin:0 0 14px;box-shadow:0 12px 30px rgba(0,0,0,.2)}
 
 footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;border-top:1px solid var(--bd2);margin-top:34px}
 
@@ -181,7 +203,7 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   header{padding:12px 0}
   .hdr{gap:10px 12px}
   .hdr-actions{gap:10px}.user-pill .user-name{display:none}.main-nav{overflow-x:auto}.nav-btn{flex:1;justify-content:center;min-width:max-content}
-  .logo{font-size:1.15rem}
+  .logo img{height:28px}
   .cd-num{font-size:1.4rem}
   .cd-lbl{font-size:.64rem}
   .kpis{grid-template-columns:1fr 1fr;gap:10px}
@@ -210,16 +232,19 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
 }
 </style>
 </head>
-<body>
+<body class="auth-locked">
 
 <header>
   <div class="wrap hdr">
     <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-      <div class="logo">APS<span>IA</span><small>Dashboard de pilotage</small></div>
+      <a class="logo" href="#" onclick="showView('dashboard');return false" aria-label="APSIA — Dashboard de pilotage">
+        <img src="02_lockup_horizontal_transparent_texte-blanc.png" alt="APSIA" width="1223" height="326">
+        <small>Dashboard de pilotage</small>
+      </a>
       <div id="sync" class="sync off"><span class="dot"></span><span class="txt">Connexion…</span></div>
     </div>
     <div class="hdr-actions">
-      <button class="user-pill" id="user-pill" onclick="openIdentity()" title="Changer d’utilisateur">
+      <button class="user-pill" id="user-pill" onclick="openAccount()" title="Compte utilisateur">
         <span class="av av-all" id="user-avatar">?</span><span class="user-name" id="user-name">S’identifier</span>
       </button>
       <div class="countdown">
@@ -321,17 +346,43 @@ footer{text-align:center;color:var(--tx3);font-size:.78rem;padding:30px 0 10px;b
   </footer>
 </div>
 
-<dialog id="dlgIdentity">
-  <h2 style="margin:0 0 8px">Bienvenue sur APSIA</h2>
-  <p class="identity-intro">Identifiez-vous pour personnaliser votre espace de pilotage.</p>
-  <div class="identity-options">
-    <div class="identity-option"><input type="radio" name="identity" id="identity-MD" value="MD"><label for="identity-MD"><span class="av av-md">MD</span><span><div class="who">Mohamed DIAWARA</div><div class="role">Porteur de Projet · 51 %</div></span></label></div>
-    <div class="identity-option"><input type="radio" name="identity" id="identity-MK" value="MK"><label for="identity-MK"><span class="av av-mk">MK</span><span><div class="who">Mamadou Cellou KANTÉ</div><div class="role">Développeur · 29 %</div></span></label></div>
-    <div class="identity-option"><input type="radio" name="identity" id="identity-MH" value="MH"><label for="identity-MH"><span class="av av-mh">MH</span><span><div class="who">Mohamed HADY</div><div class="role">Apporteur d’Affaires · 20 %</div></span></label></div>
+<dialog id="dlgAuth">
+  <img class="auth-brand" src="10_app-icon_1024.png" alt="" width="1024" height="1024">
+  <h2 style="margin:0 0 6px">Accès sécurisé APSIA</h2>
+  <p class="identity-intro">Connectez-vous ou créez vos identifiants lors de votre premier accès.</p>
+  <div class="auth-tabs">
+    <button class="auth-tab on" data-auth="login" onclick="showAuthPanel('login')">Se connecter</button>
+    <button class="auth-tab" data-auth="signup" onclick="showAuthPanel('signup')">Créer un compte</button>
   </div>
+  <div class="auth-msg" id="auth-msg"></div>
+  <div class="auth-panel on" id="auth-login">
+    <div class="field"><label>Adresse e-mail</label><input type="email" id="login-email" autocomplete="email" placeholder="nom@exemple.com"></div>
+    <div class="field"><label>Mot de passe</label><input type="password" id="login-password" autocomplete="current-password" placeholder="Votre mot de passe"></div>
+    <button class="btn btn-p" id="login-submit" onclick="signIn()">Se connecter</button>
+  </div>
+  <div class="auth-panel" id="auth-signup">
+    <div class="field"><label>Adresse e-mail</label><input type="email" id="signup-email" autocomplete="email" placeholder="nom@exemple.com"></div>
+    <div class="frow">
+      <div class="field"><label>Mot de passe</label><input type="password" id="signup-password" autocomplete="new-password" placeholder="6 caractères minimum"></div>
+      <div class="field"><label>Confirmer</label><input type="password" id="signup-confirm" autocomplete="new-password" placeholder="Répétez le mot de passe"></div>
+    </div>
+    <div class="field"><label>Votre profil APSIA</label></div>
+    <div class="identity-options">
+      <div class="identity-option"><input type="radio" name="signup-identity" id="signup-MD" value="MD"><label for="signup-MD"><span class="av av-md">MD</span><span><div class="who">Mohamed DIAWARA</div><div class="role">Porteur de Projet · 51 %</div></span></label></div>
+      <div class="identity-option"><input type="radio" name="signup-identity" id="signup-MK" value="MK"><label for="signup-MK"><span class="av av-mk">MK</span><span><div class="who">Mamadou Cellou KANTÉ</div><div class="role">Développeur · 29 %</div></span></label></div>
+      <div class="identity-option"><input type="radio" name="signup-identity" id="signup-MH" value="MH"><label for="signup-MH"><span class="av av-mh">MH</span><span><div class="who">Mohamed HADY</div><div class="role">Apporteur d’Affaires · 20 %</div></span></label></div>
+    </div>
+    <p class="auth-help">Chaque profil ne peut être associé qu’à un seul compte.</p>
+    <button class="btn btn-p" id="signup-submit" onclick="signUp()">Créer mes identifiants</button>
+  </div>
+</dialog>
+
+<dialog id="dlgAccount">
+  <h2 style="margin:0">Mon compte</h2>
+  <div class="account-card"><span class="av av-all" id="account-avatar">?</span><div><div class="who" id="account-name">—</div><div class="role" id="account-email">—</div></div></div>
   <div class="actions" style="margin:0">
-    <button class="btn btn-p" onclick="identify()">Continuer</button>
-    <button class="btn" id="identity-cancel" onclick="document.getElementById('dlgIdentity').close()">Annuler</button>
+    <button class="btn btn-d" onclick="signOut()">Se déconnecter</button>
+    <button class="btn" onclick="document.getElementById('dlgAccount').close()">Fermer</button>
   </div>
 </dialog>
 
@@ -454,14 +505,12 @@ const SUPABASE_KEY='sb_publishable_00PIAm04rdIudlz7kRGt9w_3UU_KpjV';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const K='apsia_dash_v1';
-const USER_KEY='apsia_current_user';
 let S=JSON.parse(localStorage.getItem(K)||'{}');            // statuts (cache local)
 let ACTIVITIES=JSON.parse(localStorage.getItem(K+'_activities')||'[]'); // journal partagé (cache local)
 let historyAvailable=true;
 let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégories ajoutées via Supabase
 let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
-let CURRENT=localStorage.getItem(USER_KEY);
-if(!PEOPLE[CURRENT]||CURRENT==='ALL')CURRENT='';
+let CURRENT='',SESSION=null,dataStarted=false,activitySubscribed=false;
 let F={who:'all',st:'all',q:''};
 const CY=['todo','wip','done','block'];
 const LBL={todo:'À faire',wip:'En cours',done:'Fait',block:'Bloqué'};
@@ -532,7 +581,6 @@ function subscribe(){
     .on('postgres_changes',{event:'*',schema:'public',table:'tasks'},refetchTasks)
     .subscribe(s=>{if(s==='SUBSCRIBED')setSync('online')});
 }
-let activitySubscribed=false;
 function subscribeHistory(){
   if(activitySubscribed)return;activitySubscribed=true;
   sb.channel('apsia-history')
@@ -811,28 +859,102 @@ document.querySelectorAll('.nav-btn').forEach(b=>b.onclick=()=>showView(b.datase
 
 function updateIdentity(){
   const pill=document.getElementById('user-pill'),avatar=document.getElementById('user-avatar'),name=document.getElementById('user-name');
-  if(!CURRENT){avatar.className='av av-all';avatar.textContent='?';name.textContent='S’identifier';pill.title='S’identifier';return}
-  const P=PEOPLE[CURRENT];avatar.className='av '+P.c;avatar.textContent=CURRENT;name.textContent=P.n.split(' ').slice(-1)[0];pill.title='Connecté comme '+P.n+' · cliquer pour changer';
+  if(!CURRENT){avatar.className='av av-all';avatar.textContent='?';name.textContent='Se connecter';pill.title='Se connecter';return}
+  const P=PEOPLE[CURRENT];avatar.className='av '+P.c;avatar.textContent=CURRENT;name.textContent=P.n.split(' ').slice(-1)[0];pill.title='Compte de '+P.n;
 }
-function openIdentity(){
-  document.querySelectorAll('input[name="identity"]').forEach(r=>r.checked=r.value===CURRENT);
-  document.getElementById('identity-cancel').style.display=CURRENT?'inline-block':'none';
-  document.getElementById('dlgIdentity').showModal();
+function setAuthMessage(text,type){
+  const el=document.getElementById('auth-msg');el.textContent=text||'';el.className='auth-msg'+(text?' '+(type||'err'):'');
 }
-function identify(){
-  const selected=document.querySelector('input[name="identity"]:checked');
-  if(!selected){alert('Choisissez votre profil pour continuer.');return}
-  CURRENT=selected.value;localStorage.setItem(USER_KEY,CURRENT);updateIdentity();
-  document.getElementById('dlgIdentity').close();
+function showAuthPanel(name){
+  document.querySelectorAll('.auth-panel').forEach(p=>p.classList.toggle('on',p.id==='auth-'+name));
+  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.toggle('on',b.dataset.auth===name));
+  setAuthMessage('');
 }
-document.getElementById('dlgIdentity').addEventListener('cancel',e=>{if(!CURRENT)e.preventDefault()});
+function openAuth(panel){
+  showAuthPanel(panel||'login');
+  const dlg=document.getElementById('dlgAuth');if(!dlg.open)dlg.showModal();
+}
+function authMessage(error){
+  const m=(error&&error.message)||'';
+  if(/invalid login credentials/i.test(m))return 'E-mail ou mot de passe incorrect.';
+  if(/email not confirmed/i.test(m))return 'Confirmez d’abord votre adresse e-mail.';
+  if(/already registered/i.test(m))return 'Un compte existe déjà avec cette adresse e-mail.';
+  if(/database error/i.test(m))return 'Ce profil APSIA est déjà utilisé, ou le schéma Supabase doit être mis à jour.';
+  return m||'Une erreur est survenue. Réessayez.';
+}
+function setAuthBusy(kind,busy){
+  const b=document.getElementById(kind+'-submit');b.disabled=busy;
+  b.textContent=busy?'Veuillez patienter…':kind==='login'?'Se connecter':'Créer mes identifiants';
+}
+async function signIn(){
+  const email=document.getElementById('login-email').value.trim(),password=document.getElementById('login-password').value;
+  if(!email||!password){setAuthMessage('Renseignez votre e-mail et votre mot de passe.');return}
+  setAuthBusy('login',true);setAuthMessage('');
+  const {error}=await sb.auth.signInWithPassword({email,password});
+  setAuthBusy('login',false);if(error)setAuthMessage(authMessage(error));
+}
+async function signUp(){
+  const email=document.getElementById('signup-email').value.trim(),password=document.getElementById('signup-password').value,
+        confirmPassword=document.getElementById('signup-confirm').value,selected=document.querySelector('input[name="signup-identity"]:checked');
+  if(!email||!password||!confirmPassword||!selected){setAuthMessage('Complétez tous les champs et choisissez votre profil.');return}
+  if(password.length<6){setAuthMessage('Le mot de passe doit contenir au moins 6 caractères.');return}
+  if(password!==confirmPassword){setAuthMessage('Les deux mots de passe ne correspondent pas.');return}
+  setAuthBusy('signup',true);setAuthMessage('');
+  const options={data:{actor_code:selected.value}};
+  if(/^https?:$/.test(location.protocol))options.emailRedirectTo=location.origin;
+  const {data,error}=await sb.auth.signUp({email,password,options});
+  setAuthBusy('signup',false);
+  if(error){setAuthMessage(authMessage(error));return}
+  if(!data.session){showAuthPanel('login');setAuthMessage('Compte créé. Consultez votre e-mail pour confirmer votre adresse, puis connectez-vous.','ok');}
+}
+async function applySession(session){
+  SESSION=session||null;
+  if(!SESSION){CURRENT='';updateIdentity();openAuth('login');return}
+  const {data,error}=await sb.from('profiles').select('actor,full_name').eq('user_id',SESSION.user.id).single();
+  if(error||!data){
+    await sb.auth.signOut();
+    setTimeout(()=>setAuthMessage('Profil APSIA introuvable. Exécutez le nouveau schéma Supabase avant de créer les comptes.'),50);
+    return;
+  }
+  CURRENT=data.actor;updateIdentity();
+  document.body.classList.remove('auth-locked');
+  const dlg=document.getElementById('dlgAuth');if(dlg.open)dlg.close();
+  if(!dataStarted){dataStarted=true;await load();subscribe();}
+}
+function openAccount(){
+  if(!SESSION){openAuth('login');return}
+  const P=PEOPLE[CURRENT],avatar=document.getElementById('account-avatar');
+  avatar.className='av '+P.c;avatar.textContent=CURRENT;
+  document.getElementById('account-name').textContent=P.n;
+  document.getElementById('account-email').textContent=SESSION.user.email||'';
+  document.getElementById('dlgAccount').showModal();
+}
+async function signOut(){
+  document.getElementById('dlgAccount').close();
+  await sb.auth.signOut();
+}
+async function handleSignedOut(){
+  SESSION=null;CURRENT='';dataStarted=false;activitySubscribed=false;
+  document.body.classList.add('auth-locked');
+  await sb.removeAllChannels();
+  S={};ACTIVITIES=[];customCats=[];customTasks=[];rebuild();cache();render();updateIdentity();openAuth('login');
+}
+async function initAuth(){
+  const {data}=await sb.auth.getSession();
+  await applySession(data.session);
+  sb.auth.onAuthStateChange((event,session)=>{
+    if(event==='SIGNED_OUT')setTimeout(handleSignedOut,0);
+    else if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED')setTimeout(()=>applySession(session),0);
+  });
+}
+document.getElementById('dlgAuth').addEventListener('cancel',e=>{if(!SESSION)e.preventDefault()});
+document.getElementById('login-password').addEventListener('keydown',e=>{if(e.key==='Enter')signIn()});
+document.getElementById('signup-confirm').addEventListener('keydown',e=>{if(e.key==='Enter')signUp()});
 
 document.getElementById('cd').textContent='J-'+Math.ceil((new Date('2026-10-05')-new Date())/864e5);
 updateIdentity();
 render();          // rendu immédiat depuis le cache local
-load();            // puis synchronisation depuis Supabase
-subscribe();       // et abonnement temps réel aux changements des autres membres
-if(!CURRENT)setTimeout(openIdentity,0);
+initAuth();         // authentification, puis chargement et temps réel
 </script>
 </body>
 </html>

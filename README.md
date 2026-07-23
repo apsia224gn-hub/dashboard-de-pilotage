@@ -9,7 +9,9 @@ et les autres voient les changements instantanément — sur n'importe quel appa
 ## Architecture
 
 - **`index.html`** — application complète en un seul fichier (HTML + CSS + JS, aucune étape de build).
-- **Supabase** — quatre tables :
+- **Supabase Auth** — comptes individuels par e-mail et mot de passe.
+- **Supabase** — cinq tables :
+  - `profiles` : lie chaque compte à l'un des trois associés APSIA ;
   - `task_status` : statut partagé de chaque action (à faire / en cours / fait / bloqué) ;
   - `categories` : catégories ajoutées ou modifiées depuis le dashboard ;
   - `tasks` : actions ajoutées, et modifications des actions du plan de base (surcharges).
@@ -29,10 +31,15 @@ le plan de base : une entrée Supabase de même identifiant remplace/édite cell
 Dashboard Supabase → **SQL Editor** → **New query** → coller le contenu de
 [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
 
-Le script crée les tables `task_status`, `categories` et `tasks`, active les politiques
+Le script crée les tables `profiles`, `task_status`, `categories`, `tasks` et `activity_log`, active les politiques
 d'accès (RLS) et le temps réel. Il est **idempotent** : si vous aviez déjà exécuté une
-version précédente (table `task_status` seule), ré-exécutez-le simplement pour ajouter
-`categories` et `tasks` — rien n'est perdu.
+version précédente, ré-exécutez-le simplement pour ajouter les tables manquantes — rien
+n'est perdu. **Exécutez ce schéma avant de créer le premier compte.**
+
+Dans Supabase → **Authentication → Providers → Email**, laisser le fournisseur Email activé.
+Le projet demande actuellement une confirmation par e-mail : chaque associé doit cliquer sur
+le lien reçu avant sa première connexion. Dans **Authentication → URL Configuration**, ajouter
+l'URL Vercel du dashboard aux Redirect URLs.
 
 ### 2. Configuration du dashboard
 
@@ -54,8 +61,10 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 
 ## Utilisation
 
-- **S'identifier** : au premier accès, choisir l'un des trois associés. Le profil est mémorisé
-  sur l'appareil et présélectionné comme responsable lors de la création d'une action.
+- **Créer ses identifiants** : au premier accès, saisir son e-mail, choisir un mot de passe et
+  sélectionner son profil. Chaque profil APSIA ne peut être associé qu'à un seul compte.
+- **Se connecter** : utiliser ensuite le même e-mail et le même mot de passe. Le profil du compte
+  est utilisé comme auteur dans l'historique et comme responsable présélectionné.
 - **Naviguer** : le menu sépare le `Dashboard`, les liens vers les `Dossiers` Drive et
   l'`Historique` partagé indiquant qui a fait quoi et à quelle heure.
 - **Changer un statut** : cliquer sur le badge d'une action → À faire → En cours → Fait → Bloqué.
@@ -72,16 +81,9 @@ Chaque `git push` sur la branche `main` de ce dépôt redéploie.
 - **Réinitialiser les statuts** : remet tous les statuts à « À faire » **pour toute l'équipe**
   (ne supprime pas les actions ajoutées).
 
-> L'identification nominative personnalise l'interface ; ce n'est pas un mécanisme
-> d'authentification. La protection d'accès reste celle décrite dans la section Sécurité.
-
 ## Sécurité
 
-Dashboard interne aux 3 associés, sans page de connexion : l'accès repose sur la
-confidentialité de l'URL. La clé publishable donne un accès complet (lecture/écriture) aux
-tables du dashboard. Pour un contrôle plus strict, ajouter l'authentification Supabase
-(magic link) et restreindre les politiques RLS aux utilisateurs authentifiés.
-
-
-
-git branch --set-upstream-to=upstream/main main
+Le dashboard utilise Supabase Auth. Les politiques RLS refusent l'accès aux données partagées
+tant qu'aucune session authentifiée n'est active. Le journal vérifie également que l'auteur
+enregistré correspond au profil lié au compte connecté. La clé publishable reste publique,
+mais ne permet plus à elle seule de lire ou modifier les tables.
