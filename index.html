@@ -684,6 +684,7 @@ let S=JSON.parse(localStorage.getItem(K)||'{}');            // statuts (cache lo
 let ACTIVITIES=JSON.parse(localStorage.getItem(K+'_activities')||'[]'); // journal partagé (cache local)
 let historyAvailable=true;
 let PERSONAL_TASKS=[],TASK_REQUESTS=[],workspaceAvailable=true;
+const REQUEST_BUSY=new Set();
 let customCats=JSON.parse(localStorage.getItem(K+'_cats')||'[]');   // catégories ajoutées via Supabase
 let customTasks=JSON.parse(localStorage.getItem(K+'_tasks')||'[]'); // actions ajoutées via Supabase
 let CURRENT='',SESSION=null,dataStarted=false,activitySubscribed=false;
@@ -930,7 +931,11 @@ function renderPersonal(){
 function requestCard(r,received){
   const actor=PEOPLE[received?r.requester_actor:r.recipient_actor]||PEOPLE.ALL,status=REQUEST_LBL[r.status]||r.status;
   const requestStatus=['pending','waiting'].includes(r.status)?'todo':'done',hint=dueHint(r.due_date,requestStatus);
-  const actions=received&&['pending','waiting'].includes(r.status)?'<div class="request-actions"><button class="mini-btn ok" onclick="respondRequest(\''+r.id+'\',\'accepted\')">Accepter</button><button class="mini-btn no" onclick="respondRequest(\''+r.id+'\',\'refused\')">Refuser</button>'+(r.status==='pending'?'<button class="mini-btn wait" onclick="respondRequest(\''+r.id+'\',\'waiting\')">Mettre en attente</button>':'')+'</div>':'';
+  const busy=REQUEST_BUSY.has(r.id),disabled=busy?' disabled':'';
+  const actions=received&&['pending','waiting'].includes(r.status)?'<div class="request-actions">'+
+    '<button class="mini-btn ok"'+disabled+' onclick="respondRequest(\''+r.id+'\',\'accepted\')">'+(busy?'Traitement…':'Accepter')+'</button>'+
+    '<button class="mini-btn no"'+disabled+' onclick="respondRequest(\''+r.id+'\',\'refused\')">Refuser</button>'+
+    (r.status==='pending'?'<button class="mini-btn wait"'+disabled+' onclick="respondRequest(\''+r.id+'\',\'waiting\')">Mettre en attente</button>':'')+'</div>':'';
   return '<div class="request-card"><div class="request-top"><div><div class="request-title">'+esc(r.title)+'</div><div class="request-sub">'+esc(r.subtitle||'')+'</div></div><span class="req-status req-'+r.status+'">'+esc(status)+'</span></div><div class="request-meta"><span class="prio p-'+r.priority+'">'+(r.priority==='crit'?'CRITIQUE':r.priority==='haut'?'HAUT':'NORMAL')+'</span><span class="category-tag">'+esc(categoryName(r.category_id))+'</span><span class="av '+actor.c+'">'+(received?r.requester_actor:r.recipient_actor)+'</span><span>'+(received?'Demandée par ':'Envoyée à ')+esc(actor.n)+'</span><span class="due '+dueCls(r.due_date,requestStatus)+'">Échéance : '+fmt(r.due_date)+(hint?' · '+hint:'')+'</span></div>'+actions+'</div>';
 }
 function renderRequests(){
@@ -986,9 +991,34 @@ async function sendTaskRequest(){
   document.getElementById('dlgRequest').close();TASK_REQUESTS.unshift(data);renderRequests();notify('Demande envoyée à '+PEOPLE[recipient].n+'.','ok');await logActivity('request_created','task_request',data.id,title,null,recipient);
 }
 async function respondRequest(id,response){
-  const labels={accepted:'accepter',refused:'refuser',waiting:'mettre en attente'};if(!confirm('Confirmer : '+labels[response]+' cette demande ?'))return;
-  const {error}=await sb.rpc('respond_task_request',{p_request_id:id,p_response:response});if(error){notify('Réponse impossible : '+error.message,'err');return}
-  await Promise.all([refetchRequests(),refetchPersonal()]);notify('Demande '+(response==='accepted'?'acceptée':response==='refused'?'refusée':'mise en attente')+'.','ok');
+  if(REQUEST_BUSY.has(id)||!['accepted','refused','waiting'].includes(response))return;
+  const request=TASK_REQUESTS.find(item=>item.id===id);
+  if(!request){notify('Cette demande est introuvable. Actualisez la page.','err');return}
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){notify('Votre session a expiré. Reconnectez-vous pour répondre.','err');openAuth('login');return}
+
+  REQUEST_BUSY.add(id);renderRequests();
+  let result=await sb.rpc('respond_task_request',{p_request_id:id,p_response:response});
+  if(result.error&&/(jwt|token|session|unauthorized|401)/i.test(result.error.message||'')){
+    const refreshed=await sb.auth.refreshSession();
+    if(!refreshed.error)result=await sb.rpc('respond_task_request',{p_request_id:id,p_response:response});
+  }
+  REQUEST_BUSY.delete(id);
+
+  if(result.error){
+    console.error('respond_task_request',result.error);
+    renderRequests();
+    const message=result.error.message||'Erreur inconnue';
+    if(/introuvable|accès refusé|access denied/i.test(message))notify('Réponse refusée : ce compte n’est pas reconnu comme destinataire de la demande.','err');
+    else if(/déjà été traitée|already/i.test(message)){await refetchRequests();notify('Cette demande avait déjà été traitée.','err')}
+    else if(/function|schema cache|category_id|column/i.test(message))notify('La migration Supabase des demandes doit être réappliquée.','err');
+    else notify('Réponse impossible : '+message,'err');
+    return;
+  }
+
+  request.status=response;request.responded_at=response==='waiting'?null:new Date().toISOString();renderRequests();
+  await Promise.all([refetchRequests(),refetchPersonal()]);
+  notify('Demande '+(response==='accepted'?'acceptée':response==='refused'?'refusée':'mise en attente')+'.','ok');
 }
 
 function stats(){

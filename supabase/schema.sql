@@ -337,18 +337,25 @@ security definer set search_path = public
 as $$
 declare
   req public.task_requests%rowtype;
+  current_user_id uuid := auth.uid();
   current_actor text;
   new_task_id uuid;
 begin
+  if current_user_id is null then
+    raise exception 'Session utilisateur expirée';
+  end if;
   if p_response not in ('accepted','refused','waiting') then
     raise exception 'Réponse invalide';
   end if;
 
-  select actor into current_actor from public.profiles where user_id = auth.uid();
+  select actor into current_actor from public.profiles where user_id = current_user_id;
   select * into req from public.task_requests where id = p_request_id for update;
 
-  if req.id is null or current_actor is null or req.recipient_actor <> current_actor then
-    raise exception 'Demande introuvable ou accès refusé';
+  if req.id is null then
+    raise exception 'Demande introuvable';
+  end if;
+  if current_actor is null or req.recipient_actor <> current_actor then
+    raise exception 'Accès refusé : seul le destinataire peut répondre';
   end if;
   if req.status not in ('pending','waiting') then
     raise exception 'Cette demande a déjà été traitée';
@@ -358,7 +365,7 @@ begin
     insert into public.personal_tasks
       (user_id,source_request_id,category_id,title,subtitle,due_date,priority,status)
     values
-      (auth.uid(),req.id,req.category_id,req.title,req.subtitle,req.due_date,req.priority,'todo')
+      (current_user_id,req.id,coalesce(req.category_id,'GEN'),req.title,req.subtitle,req.due_date,req.priority,'todo')
     returning id into new_task_id;
   end if;
 
@@ -377,4 +384,7 @@ end;
 $$;
 
 revoke all on function public.respond_task_request(uuid,text) from public;
+revoke execute on function public.respond_task_request(uuid,text) from anon;
 grant execute on function public.respond_task_request(uuid,text) to authenticated;
+
+notify pgrst, 'reload schema';

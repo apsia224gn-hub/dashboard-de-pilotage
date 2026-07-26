@@ -102,6 +102,10 @@ Exécuter `node scripts/audit.mjs` pour vérifier la syntaxe JavaScript, les ide
 la navigation, les ressources locales, le caractère non modifiable du Dashboard et les éléments essentiels
 du schéma SQL. Le dernier rapport détaillé est disponible dans [`AUDIT.md`](AUDIT.md).
 
+Si les actions **Accepter / Refuser / Mettre en attente** ne répondent pas après une évolution
+de Supabase, exécuter uniquement [`supabase/request_actions_fix.sql`](supabase/request_actions_fix.sql).
+Ce correctif republie la fonction atomique, recharge le cache PostgREST et ne supprime aucune donnée.
+
 ## Sécurité
 
 Le dashboard utilise Supabase Auth. Les politiques RLS refusent l'accès aux données partagées
